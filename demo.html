@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiambrería - Catálogo de Precios (Demo)</title>
+  <meta name="description" content="Catálogo de precios - Fiambrería y Almacén">
+  <meta name="theme-color" content="#ee7512">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand': {
+              50: '#fef7ee',
+              100: '#fdecd3',
+              200: '#fad5a5',
+              300: '#f6b86d',
+              400: '#f19132',
+              500: '#ee7512',
+              600: '#df5a08',
+              700: '#b94309',
+              800: '#93350f',
+              900: '#772e10',
+              950: '#401506',
+            },
+            'warm': {
+              50: '#faf9f7',
+              100: '#f3f1ed',
+              200: '#e5e1d8',
+              300: '#d3ccbe',
+              400: '#bdb3a0',
+              500: '#ac9d87',
+              600: '#9f8d77',
+              700: '#847462',
+              800: '#6c5f53',
+              900: '#594f45',
+              950: '#2f2924',
+            },
+          },
+          fontFamily: {
+            'display': ['Playfair Display', 'Georgia', 'serif'],
+            'body': ['Source Sans 3', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-warm-50 text-warm-900 antialiased">
+  
+  <!-- Header -->
+  <header class="sticky top-0 z-50 glass border-b border-warm-200 px-4 py-3 sm:px-6 sm:py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-md">
+          <svg class="text-white" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path>
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path>
+            <path d="M2 7h20"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display text-xl sm:text-2xl font-bold text-warm-900">Fiambrería</h1>
+          <p class="text-xs sm:text-sm text-warm-500 -mt-0.5">Catálogo de Precios</p>
+        </div>
+      </div>
+      <span class="hidden sm:inline-block text-sm text-warm-500" id="update-date"></span>
+    </div>
+  </header>
+
+  <!-- Search Section -->
+  <div class="sticky top-[60px] sm:top-[68px] z-40 glass border-b border-warm-200 px-4 py-3 sm:px-6 sm:py-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="relative">
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-warm-400 pointer-events-none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+        </div>
+        <input
+          type="text"
+          id="search-input"
+          class="w-full px-4 py-3 pl-12 bg-white border-2 border-warm-200 rounded-xl text-warm-800 placeholder:text-warm-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all duration-200"
+          placeholder="Buscar producto, marca..."
+          autocomplete="off"
+        >
+        <button
+          id="clear-search"
+          class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-warm-400 hover:text-warm-600 hover:bg-warm-100 transition-all duration-200 hidden"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 px-4 py-6 sm:px-6 sm:py-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Quick Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <p class="text-sm text-warm-500">
+            <span class="font-semibold text-warm-700" id="category-count">4</span> categorías · 
+            <span class="font-semibold text-warm-700" id="product-count">16</span> productos
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button id="expand-all" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-warm-100 text-warm-700 hover:bg-warm-200 transition-colors">
+            Expandir todo
+          </button>
+          <button id="collapse-all" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-warm-100 text-warm-700 hover:bg-warm-200 transition-colors">
+            Colapsar todo
+          </button>
+        </div>
+      </div>
+
+      <!-- Catalog -->
+      <div id="catalog" class="space-y-4">
+        <!-- Categories will be rendered here -->
+      </div>
+
+      <!-- Search Results (hidden by default) -->
+      <div id="search-results" class="hidden">
+        <!-- Search results will be rendered here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-warm-200 bg-warm-50 px-4 py-6 sm:px-6 sm:py-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-center sm:text-left">
+          <p class="font-display font-semibold text-warm-800">Fiambrería</p>
+          <p class="text-sm text-warm-500">Catálogo actualizado · Precios sujetos a cambios</p>
+        </div>
+        <a 
+          href="https://wa.me/5491112345678?text=Hola!%20Quisiera%20hacer%20una%20consulta%20sobre%20los%20productos."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-colors"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          </svg>
+          Contactanos
+        </a>
+      </div>
+      <div class="mt-6 pt-4 border-t border-warm-200 text-center">
+        <p class="text-xs text-warm-400">© 2025 Fiambrería. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ============================================================
+    // MOCK DATA - This will be replaced with Firebase in production
+    // ============================================================
+    
+    const mockData = {
+      categories: [
+        { id: 'cat-1', name: 'Fiambres', icon: 'meat', brands: ['brand-1', 'brand-2'] },
+        { id: 'cat-2', name: 'Quesos', icon: 'cheese', brands: ['brand-5', 'brand-6'] },
+        { id: 'cat-3', name: 'Lácteos', icon: 'milk', brands: ['brand-3', 'brand-4'] },
+        { id: 'cat-4', name: 'Almacén', icon: 'store', brands: ['brand-1'] },
+      ],
+      brands: {
+        'brand-1': { name: 'Paladini' },
+        'brand-2': { name: 'Cagnoli' },
+        'brand-3': { name: 'La Serenísima' },
+        'brand-4': { name: 'Sancor' },
+        'brand-5': { name: 'Santa Rosa' },
+        'brand-6': { name: 'Verónica' },
+      },
+      products: [
+        // Fiambres - Paladini
+        { id: 'p1', name: 'Jamón Cocido Natural', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 8500, weights: [100, 250, 500, 1000] }], available: true, tags: ['premium', 'sin-tacc'] },
+        { id: 'p2', name: 'Salame Milán', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 12000, weights: [100, 250, 500] }], available: true },
+        { id: 'p3', name: 'Mortadela con Aceitunas', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 6500, weights: [100, 250, 500, 1000] }], available: true },
+        // Fiambres - Cagnoli
+        { id: 'p4', name: 'Jamón Crudo', brandId: 'brand-2', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 18000, weights: [100, 250, 500] }], available: true, tags: ['premium'] },
+        { id: 'p5', name: 'Bondiola', brandId: 'brand-2', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 15000, weights: [100, 250, 500] }], available: true },
+        // Quesos - Santa Rosa
+        { id: 'p6', name: 'Queso Sardo', brandId: 'brand-5', categoryId: 'cat-2', prices: [{ type: 'fraction', whole: 25000, half: 13000, quarter: 7000, label: 'horma' }, { type: 'weight', pricePerKg: 9500, weights: [250, 500, 1000] }], available: true, tags: ['artesanal'] },
+        { id: 'p7', name: 'Queso Cremoso', brandId: 'brand-5', categoryId: 'cat-2', prices: [{ type: 'fraction', whole: 18000, half: 9500, quarter: 5000, label: 'horma' }], available: true },
+        // Quesos - Verónica
+        { id: 'p8', name: 'Queso Rallado', brandId: 'brand-6', categoryId: 'cat-2', prices: [{ type: 'unit', price: 2800, unit: 'paquete 250g' }, { type: 'unit', price: 5200, unit: 'paquete 500g' }], available: true },
+        { id: 'p9', name: 'Queso Port Salut', brandId: 'brand-6', categoryId: 'cat-2', prices: [{ type: 'weight', pricePerKg: 8200, weights: [250, 500, 1000] }], available: true },
+        // Lácteos - La Serenísima
+        { id: 'p10', name: 'Leche Entera', brandId: 'brand-3', categoryId: 'cat-3', prices: [{ type: 'unit', price: 1200, unit: 'litro' }], available: true },
+        { id: 'p11', name: 'Manteca', brandId: 'brand-3', categoryId: 'cat-3', prices: [{ type: 'unit', price: 2500, unit: 'pan 200g' }], available: true },
+        { id: 'p12', name: 'Crema de Leche', brandId: 'brand-3', categoryId: 'cat-3', prices: [{ type: 'unit', price: 3200, unit: 'pote 200ml' }, { type: 'unit', price: 5800, unit: 'pote 500ml' }], available: true },
+        // Lácteos - Sancor
+        { id: 'p13', name: 'Yogur Natural', brandId: 'brand-4', categoryId: 'cat-3', prices: [{ type: 'unit', price: 1800, unit: 'pote 190g' }, { type: 'unit', price: 4500, unit: 'pote 500g' }], available: true },
+        { id: 'p14', name: 'Dulce de Leche', brandId: 'brand-4', categoryId: 'cat-3', prices: [{ type: 'unit', price: 3800, unit: 'pote 400g' }, { type: 'unit', price: 6500, unit: 'pote 1kg' }], available: true, tags: ['clásico'] },
+        // Almacén
+        { id: 'p15', name: 'Aceitunas Verdes', brandId: 'brand-1', categoryId: 'cat-4', prices: [{ type: 'weight', pricePerKg: 4500, weights: [250, 500, 1000] }], available: true },
+        { id: 'p16', name: 'Aceitunas Negras', brandId: 'brand-1', categoryId: 'cat-4', prices: [{ type: 'weight', pricePerKg: 5200, weights: [250, 500, 1000] }], available: false },
+      ]
+    };
+
+    // ============================================================
+    // UTILITY FUNCTIONS
+    // ============================================================
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    }
+
+    function formatWeight(grams) {
+      return grams >= 1000 ? `${grams / 1000} kg` : `${grams} g`;
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // ============================================================
+    // STATE MANAGEMENT
+    // ============================================================
+
+    const state = {
+      expandedCategories: new Set(),
+      expandedBrands: new Set(),
+      searchQuery: '',
+    };
+
+    // ============================================================
+    // ICONS
+    // ============================================================
+
+    const icons = {
+      chevronDown: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>`,
+      check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>`,
+      xCircle: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>`,
+      whatsapp: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>`,
+      scale: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg>`,
+      package: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>`,
+      slice: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"></path></svg>`,
+      meat: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.5 2.5c2.5 2.5 2.5 6.5 0 9s-6.5 2.5-9 0-2.5-6.5 0-9 6.5-2.5 9 0Z"></path><path d="M8 8c-1.5 1.5-3 3.5-3 6s1.5 5 4 6c2.5 1 5 .5 7-1"></path><path d="M14.5 14.5c1.5 1.5 1.5 4 0 5.5s-4 1.5-5.5 0"></path></svg>`,
+      cheese: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"></path><path d="M2 12 8 4h8l6 8"></path><path d="m2 12 3 8h14l3-8"></path><circle cx="8" cy="16" r="1"></circle><circle cx="14" cy="14" r="1"></circle></svg>`,
+      milk: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8l2 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6Z"></path><path d="M6 6h12"></path><path d="M10 2v4"></path><path d="M14 2v4"></path></svg>`,
+      store: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path></svg>`,
+    };
+
+    // ============================================================
+    // RENDER FUNCTIONS
+    // ============================================================
+
+    function renderPrice(price) {
+      if (price.type === 'weight') {
+        const weightOptions = price.weights.map(w => 
+          `<span class="text-xs px-2 py-1 rounded bg-warm-100 text-warm-600">${formatWeight(w)}: ${formatCurrency(Math.round(price.pricePerKg * w / 1000))}</span>`
+        ).join('');
+        return `
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-brand-500">${icons.scale}</span>
+              <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 font-semibold text-sm">
+                ${formatCurrency(price.pricePerKg)}
+                <span class="text-xs font-normal text-brand-500">/ kg</span>
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">${weightOptions}</div>
+          </div>
+        `;
+      }
+      
+      if (price.type === 'fraction') {
+        return `
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-brand-500">${icons.slice}</span>
+              <span class="text-xs text-warm-500">Por ${price.label}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <div class="text-center px-2 py-1.5 rounded bg-warm-50 border border-warm-100">
+                <div class="text-xs text-warm-500">entera</div>
+                <div class="font-semibold text-brand-600 text-sm">${formatCurrency(price.whole)}</div>
+              </div>
+              <div class="text-center px-2 py-1.5 rounded bg-warm-50 border border-warm-100">
+                <div class="text-xs text-warm-500">1/2</div>
+                <div class="font-semibold text-brand-600 text-sm">${formatCurrency(price.half)}</div>
+              </div>
+              <div class="text-center px-2 py-1.5 rounded bg-warm-50 border border-warm-100">
+                <div class="text-xs text-warm-500">1/4</div>
+                <div class="font-semibold text-brand-600 text-sm">${formatCurrency(price.quarter)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Unit price
+      return `
+        <div class="flex items-center gap-2">
+          <span class="text-brand-500">${icons.package}</span>
+          <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 font-semibold text-sm">
+            ${formatCurrency(price.price)}
+            <span class="text-xs font-normal text-brand-500">/ ${price.unit}</span>
+          </span>
+        </div>
+      `;
+    }
+
+    function renderProduct(product) {
+      const pricesHtml = product.prices.map(p => renderPrice(p)).join('<hr class="border-warm-100 my-2">');
+      const tagsHtml = product.tags ? product.tags.map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warm-200 text-warm-700">${t}</span>`).join('') : '';
+      const whatsappMsg = encodeURIComponent(`Hola! Me interesa: ${product.name}`);
+      
+      return `
+        <article class="bg-gradient-to-br from-white to-warm-50 p-4 rounded-lg border border-warm-100 hover:border-brand-200 hover:shadow-sm transition-all duration-200 animate-fade-in ${!product.available ? 'opacity-60' : ''}">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-semibold text-warm-800 text-sm sm:text-base leading-tight">${product.name}</h4>
+            </div>
+            <div class="flex-shrink-0">
+              ${product.available 
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-xs font-medium">${icons.check} Disponible</span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-xs font-medium">${icons.xCircle} Sin stock</span>`
+              }
+            </div>
+          </div>
+          <div class="space-y-3">${pricesHtml}</div>
+          ${tagsHtml ? `<div class="flex flex-wrap gap-1 mt-3 pt-3 border-t border-warm-100">${tagsHtml}</div>` : ''}
+          ${product.available ? `
+            <div class="mt-3 pt-3 border-t border-warm-100">
+              <a href="https://wa.me/?text=${whatsappMsg}" target="_blank" rel="noopener noreferrer"
+                 class="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-green-500 text-white font-medium text-sm hover:bg-green-600 transition-colors">
+                ${icons.whatsapp} Consultar
+              </a>
+            </div>
+          ` : ''}
+        </article>
+      `;
+    }
+
+    function renderBrand(brandId, products) {
+      const brand = mockData.brands[brandId];
+      const isExpanded = state.expandedBrands.has(brandId);
+      
+      return `
+        <div class="border-b border-warm-100 last:border-b-0" data-brand-id="${brandId}">
+          <button class="brand-toggle w-full flex items-center justify-between px-4 py-3 hover:bg-warm-50 transition-colors text-left">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-warm-700">${brand.name}</span>
+              <span class="text-xs text-warm-400">(${products.length})</span>
+            </div>
+            <span class="transition-transform duration-200 text-warm-400 ${isExpanded ? 'rotate-180' : ''}">${icons.chevronDown}</span>
+          </button>
+          <div class="brand-content ${isExpanded ? '' : 'hidden'}">
+            <div class="p-3 pt-0 grid gap-3">
+              ${products.map(p => renderProduct(p)).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCategory(category) {
+      const isExpanded = state.expandedCategories.has(category.id);
+      const products = mockData.products.filter(p => p.categoryId === category.id);
+      const brandGroups = {};
+      
+      products.forEach(p => {
+        if (!brandGroups[p.brandId]) brandGroups[p.brandId] = [];
+        brandGroups[p.brandId].push(p);
+      });
+      
+      const brandsHtml = Object.entries(brandGroups)
+        .map(([brandId, prods]) => renderBrand(brandId, prods))
+        .join('');
+      
+      const totalProducts = products.length;
+      const brandCount = Object.keys(brandGroups).length;
+      
+      return `
+        <div class="bg-white rounded-xl border border-warm-200 overflow-hidden transition-all duration-300 hover:border-brand-300 hover:shadow-md" data-category-id="${category.id}">
+          <button class="category-toggle flex items-center justify-between p-4 cursor-pointer select-none hover:bg-warm-50 transition-colors w-full text-left">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-brand-500">
+                ${icons[category.icon] || icons.store}
+              </div>
+              <div>
+                <h3 class="font-display font-semibold text-warm-800">${category.name}</h3>
+                <p class="text-xs text-warm-500">${brandCount} marcas · ${totalProducts} productos</p>
+              </div>
+            </div>
+            <span class="transition-transform duration-300 text-warm-400 ${isExpanded ? 'rotate-180' : ''}">${icons.chevronDown}</span>
+          </button>
+          <div class="category-content border-t border-warm-100 ${isExpanded ? '' : 'hidden'}">
+            ${brandsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCatalog() {
+      const catalogEl = document.getElementById('catalog');
+      catalogEl.innerHTML = mockData.categories.map(c => renderCategory(c)).join('');
+      attachCatalogListeners();
+    }
+
+    function renderSearchResults(query) {
+      const searchResultsEl = document.getElementById('search-results');
+      const catalogEl = document.getElementById('catalog');
+      
+      if (!query.trim()) {
+        searchResultsEl.classList.add('hidden');
+        catalogEl.classList.remove('hidden');
+        return;
+      }
+      
+      const normalizedQuery = query.toLowerCase();
+      const results = mockData.products.filter(p => {
+        const brand = mockData.brands[p.brandId];
+        const category = mockData.categories.find(c => c.id === p.categoryId);
+        return p.name.toLowerCase().includes(normalizedQuery) ||
+               brand?.name.toLowerCase().includes(normalizedQuery) ||
+               category?.name.toLowerCase().includes(normalizedQuery) ||
+               p.tags?.some(t => t.toLowerCase().includes(normalizedQuery));
+      });
+      
+      catalogEl.classList.add('hidden');
+      searchResultsEl.classList.remove('hidden');
+      
+      if (results.length === 0) {
+        searchResultsEl.innerHTML = `
+          <div class="text-center py-12 animate-fade-in">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-warm-100 flex items-center justify-center text-warm-400">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+                <path d="M8 8h6"></path>
+              </svg>
+            </div>
+            <h3 class="font-display text-lg font-semibold text-warm-700 mb-1">Sin resultados</h3>
+            <p class="text-warm-500 text-sm mb-4">No encontramos productos para "<span class="font-medium">${query}</span>"</p>
+            <button onclick="clearSearch()" class="px-4 py-2 rounded-lg bg-warm-100 text-warm-700 font-medium hover:bg-warm-200 transition-colors">
+              Limpiar búsqueda
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      // Group by category and brand
+      const grouped = {};
+      results.forEach(p => {
+        const category = mockData.categories.find(c => c.id === p.categoryId);
+        const brand = mockData.brands[p.brandId];
+        const key = `${category?.name || 'Otros'} - ${brand?.name || 'Sin marca'}`;
+        if (!grouped[key]) grouped[key] = { category: category?.name, brand: brand?.name, products: [] };
+        grouped[key].products.push(p);
+      });
+      
+      searchResultsEl.innerHTML = `
+        <div class="animate-fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-medium text-warm-600">${results.length} resultado${results.length !== 1 ? 's' : ''} para</h2>
+              <p class="font-display text-lg font-semibold text-warm-800">"${query}"</p>
+            </div>
+            <button onclick="clearSearch()" class="px-3 py-1.5 rounded-lg bg-warm-100 text-warm-700 text-sm font-medium hover:bg-warm-200 transition-colors flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              Limpiar
+            </button>
+          </div>
+          <div class="space-y-6">
+            ${Object.values(grouped).map(g => `
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warm-200 text-warm-700">${g.category}</span>
+                  <span class="text-warm-300">›</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700">${g.brand}</span>
+                </div>
+                <div class="grid gap-3">
+                  ${g.products.map(p => renderProduct(p)).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // EVENT HANDLERS
+    // ============================================================
+
+    function attachCatalogListeners() {
+      document.querySelectorAll('.category-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const categoryEl = btn.closest('[data-category-id]');
+          const categoryId = categoryEl.dataset.categoryId;
+          
+          if (state.expandedCategories.has(categoryId)) {
+            state.expandedCategories.delete(categoryId);
+          } else {
+            state.expandedCategories.add(categoryId);
+          }
+          
+          const content = categoryEl.querySelector('.category-content');
+          const chevron = btn.querySelector('span:last-child');
+          content.classList.toggle('hidden');
+          chevron.classList.toggle('rotate-180');
+        });
+      });
+
+      document.querySelectorAll('.brand-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const brandEl = btn.closest('[data-brand-id]');
+          const brandId = brandEl.dataset.brandId;
+          
+          if (state.expandedBrands.has(brandId)) {
+            state.expandedBrands.delete(brandId);
+          } else {
+            state.expandedBrands.add(brandId);
+          }
+          
+          const content = brandEl.querySelector('.brand-content');
+          const chevron = btn.querySelector('span:last-child');
+          content.classList.toggle('hidden');
+          chevron.classList.toggle('rotate-180');
+        });
+      });
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-search').classList.add('hidden');
+      state.searchQuery = '';
+      renderSearchResults('');
+    }
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set date
+      document.getElementById('update-date').textContent = 
+        `Actualizado: ${new Date().toLocaleDateString('es-AR')}`;
+      
+      // Render catalog
+      renderCatalog();
+      
+      // Search handlers
+      const searchInput = document.getElementById('search-input');
+      const clearBtn = document.getElementById('clear-search');
+      
+      const debouncedSearch = debounce((query) => {
+        state.searchQuery = query;
+        renderSearchResults(query);
+      }, 300);
+      
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value;
+        clearBtn.classList.toggle('hidden', !query);
+        debouncedSearch(query);
+      });
+      
+      clearBtn.addEventListener('click', clearSearch);
+      
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') clearSearch();
+        if (e.key === 'Enter') {
+          state.searchQuery = e.target.value;
+          renderSearchResults(e.target.value);
+        }
+      });
+      
+      // Expand/Collapse all
+      document.getElementById('expand-all').addEventListener('click', () => {
+        mockData.categories.forEach(c => state.expandedCategories.add(c.id));
+        Object.keys(mockData.brands).forEach(b => state.expandedBrands.add(b));
+        renderCatalog();
+      });
+      
+      document.getElementById('collapse-all').addEventListener('click', () => {
+        state.expandedCategories.clear();
+        state.expandedBrands.clear();
+        renderCatalog();
+      });
+      
+      console.log('🥩 Fiambrería Catálogo Demo initialized');
+    });
+  </script>
+</body>
+</html>
