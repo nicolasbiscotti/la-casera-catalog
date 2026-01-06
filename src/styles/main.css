@@ -1,125 +1,316 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* ============================================================
+   THEME CONFIGURATION - Tailwind CSS v4
+   Using CSS-based configuration instead of JS config
+   ============================================================ */
+
+@theme {
+  /* Brand colors - warm deli aesthetic */
+  --color-brand-50: #fef7ee;
+  --color-brand-100: #fdecd3;
+  --color-brand-200: #fad5a5;
+  --color-brand-300: #f6b86d;
+  --color-brand-400: #f19132;
+  --color-brand-500: #ee7512;
+  --color-brand-600: #df5a08;
+  --color-brand-700: #b94309;
+  --color-brand-800: #93350f;
+  --color-brand-900: #772e10;
+  --color-brand-950: #401506;
+
+  /* Warm neutral tones */
+  --color-warm-50: #faf9f7;
+  --color-warm-100: #f3f1ed;
+  --color-warm-200: #e5e1d8;
+  --color-warm-300: #d3ccbe;
+  --color-warm-400: #bdb3a0;
+  --color-warm-500: #ac9d87;
+  --color-warm-600: #9f8d77;
+  --color-warm-700: #847462;
+  --color-warm-800: #6c5f53;
+  --color-warm-900: #594f45;
+  --color-warm-950: #2f2924;
+
+  /* Font families */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+
+  /* Custom animations */
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-slide-down: slide-down 0.3s ease-out;
+  --animate-pulse-soft: pulse-soft 2s infinite;
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-down {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
 
 @layer base {
   * {
     box-sizing: border-box;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply font-body text-warm-900 bg-warm-50 antialiased;
+    font-family: var(--font-body);
+    color: var(--color-warm-900);
+    background-color: var(--color-warm-50);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
   }
 }
+
+/* ============================================================
+   COMPONENT STYLES
+   ============================================================ */
 
 @layer components {
   /* Search input styling */
   .search-input {
-    @apply w-full px-4 py-3 pl-12 
-           bg-white border-2 border-warm-200 
-           rounded-xl text-warm-800 
-           placeholder:text-warm-400
-           focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100
-           transition-all duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background-color: white;
+    border: 2px solid var(--color-warm-200);
+    border-radius: 0.75rem;
+    color: var(--color-warm-800);
+    transition: all 0.2s;
+  }
+
+  .search-input::placeholder {
+    color: var(--color-warm-400);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-brand-400);
+    box-shadow: 0 0 0 2px var(--color-brand-100);
   }
 
   /* Category accordion styling */
   .category-item {
-    @apply bg-white rounded-xl border border-warm-200 
-           overflow-hidden transition-all duration-300
-           hover:border-brand-300 hover:shadow-md;
+    background-color: white;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-warm-200);
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .category-item:hover {
+    border-color: var(--color-brand-300);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   }
 
   .category-header {
-    @apply flex items-center justify-between p-4 
-           cursor-pointer select-none
-           hover:bg-warm-50 transition-colors;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+  }
+
+  .category-header:hover {
+    background-color: var(--color-warm-50);
   }
 
   .category-content {
-    @apply border-t border-warm-100;
+    border-top: 1px solid var(--color-warm-100);
   }
 
   /* Product card styling */
   .product-card {
-    @apply bg-gradient-to-br from-white to-warm-50 
-           p-4 rounded-lg border border-warm-100
-           hover:border-brand-200 hover:shadow-sm
-           transition-all duration-200;
+    background: linear-gradient(to bottom right, white, var(--color-warm-50));
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-warm-100);
+    transition: all 0.2s;
+  }
+
+  .product-card:hover {
+    border-color: var(--color-brand-200);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   }
 
   /* Price tag styling */
   .price-tag {
-    @apply inline-flex items-center gap-1 
-           px-3 py-1.5 rounded-lg
-           bg-brand-50 text-brand-700 
-           font-semibold text-sm;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-brand-50);
+    color: var(--color-brand-700);
+    font-weight: 600;
+    font-size: 0.875rem;
   }
 
   .price-tag-unit {
-    @apply text-xs font-normal text-brand-500;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-brand-500);
   }
 
   /* Button styling */
   .btn-primary {
-    @apply px-6 py-3 rounded-xl 
-           bg-brand-500 text-white font-semibold
-           hover:bg-brand-600 active:bg-brand-700
-           focus:outline-none focus:ring-2 focus:ring-brand-300
-           transition-all duration-200
-           shadow-md hover:shadow-lg;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    background-color: var(--color-brand-500);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-brand-600);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+
+  .btn-primary:active {
+    background-color: var(--color-brand-700);
+  }
+
+  .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-brand-300);
   }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-lg 
-           bg-warm-100 text-warm-700 font-medium
-           hover:bg-warm-200 active:bg-warm-300
-           focus:outline-none focus:ring-2 focus:ring-warm-300
-           transition-all duration-200;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-warm-100);
+    color: var(--color-warm-700);
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-warm-200);
+  }
+
+  .btn-secondary:active {
+    background-color: var(--color-warm-300);
+  }
+
+  .btn-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-warm-300);
   }
 
   .btn-whatsapp {
-    @apply inline-flex items-center gap-2 
-           px-4 py-2 rounded-lg
-           bg-green-500 text-white font-medium
-           hover:bg-green-600 active:bg-green-700
-           transition-all duration-200;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #22c55e;
+    color: white;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-whatsapp:hover {
+    background-color: #16a34a;
+  }
+
+  .btn-whatsapp:active {
+    background-color: #15803d;
   }
 
   /* Skeleton loading */
   .skeleton {
-    @apply animate-pulse-soft bg-warm-200 rounded;
+    animation: var(--animate-pulse-soft);
+    background-color: var(--color-warm-200);
+    border-radius: 0.25rem;
   }
 
   /* Badge styling */
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 
-           rounded-full text-xs font-medium;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
   .badge-category {
-    @apply bg-warm-200 text-warm-700;
+    background-color: var(--color-warm-200);
+    color: var(--color-warm-700);
   }
 
   .badge-brand {
-    @apply bg-brand-100 text-brand-700;
+    background-color: var(--color-brand-100);
+    color: var(--color-brand-700);
   }
 }
+
+/* ============================================================
+   UTILITY STYLES
+   ============================================================ */
 
 @layer utilities {
   /* Custom scrollbar */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: theme('colors.warm.300') transparent;
+    scrollbar-color: var(--color-warm-300) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -132,12 +323,12 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: theme('colors.warm.300');
+    background-color: var(--color-warm-300);
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: theme('colors.warm.400');
+    background-color: var(--color-warm-400);
   }
 
   /* Text utilities */
@@ -147,6 +338,15 @@
 
   /* Backdrop blur support */
   .glass {
-    @apply bg-white/80 backdrop-blur-md;
+    background-color: rgb(255 255 255 / 0.8);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Line clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

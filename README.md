@@ -1,4 +1,4 @@
-# 🥩 Fiambrería - Catálogo de Precios
+# 🥩 La Casera - Catálogo de Precios
 
 Aplicación web para catálogo de precios de fiambrería/almacén, con panel de administración seguro.
 
@@ -23,7 +23,7 @@ Aplicación web para catálogo de precios de fiambrería/almacén, con panel de 
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend**: Vite + TypeScript + Tailwind CSS
+- **Frontend**: Vite 7 + TypeScript + Tailwind CSS v4
 - **Base de Datos**: Firestore
 - **Autenticación**: Firebase Auth
 - **Hosting**: Vercel (frontend) + Firebase (backend)
@@ -32,7 +32,7 @@ Aplicación web para catálogo de precios de fiambrería/almacén, con panel de 
 
 ### Prerrequisitos
 
-- Node.js 18+
+- Node.js 20+
 - pnpm (`npm install -g pnpm`)
 - Firebase CLI (`npm install -g firebase-tools`)
 
@@ -41,7 +41,7 @@ Aplicación web para catálogo de precios de fiambrería/almacén, con panel de 
 ```bash
 # Clonar repositorio
 git clone <repository-url>
-cd fiambreria-catalogo
+cd la-casera-catalogo
 
 # Instalar dependencias
 pnpm install
@@ -72,7 +72,7 @@ pnpm preview
 ## 📁 Estructura del Proyecto
 
 ```
-fiambreria-catalogo/
+la-casera-catalogo/
 ├── src/
 │   ├── components/       # Componentes UI
 │   │   ├── Header.ts
