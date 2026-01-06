@@ -1,5 +1,7 @@
 {
   "name": "la-casera-catalogo",
+  "license": "MIT",
+  "author": "Nicolás Biscotti <nicolas.biscotti@gmail.com>",
   "private": true,
   "version": "0.1.0",
   "type": "module",
