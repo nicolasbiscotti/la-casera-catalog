@@ -39,9 +39,9 @@ export function createDashboardPage(): HTMLElement {
       ${createIcon('categories', { size: 24, className: 'text-brand-500 group-hover:scale-110 transition-transform' })}
       <span class="text-sm font-medium text-warm-700">Nueva Categoría</span>
     </a>
-    <a href="#/admin/brands/new" class="flex flex-col items-center gap-2 p-4 rounded-lg border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors group">
-      ${createIcon('brands', { size: 24, className: 'text-brand-500 group-hover:scale-110 transition-transform' })}
-      <span class="text-sm font-medium text-warm-700">Nueva Marca</span>
+    <a href="#/admin/export-pdf" class="flex flex-col items-center gap-2 p-4 rounded-lg border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors group">
+      ${createIcon('download', { size: 24, className: 'text-brand-500 group-hover:scale-110 transition-transform' })}
+      <span class="text-sm font-medium text-warm-700">Exportar PDF</span>
     </a>
     <a href="#/admin/history" class="flex flex-col items-center gap-2 p-4 rounded-lg border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors group">
       ${createIcon('history', { size: 24, className: 'text-brand-500 group-hover:scale-110 transition-transform' })}

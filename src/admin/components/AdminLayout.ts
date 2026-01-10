@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { path: '/admin/brands', label: 'Marcas', icon: 'brands' },
   { path: '/admin/products', label: 'Productos', icon: 'products' },
   { path: '/admin/history', label: 'Historial', icon: 'history' },
+  { path: '/admin/export-pdf', label: 'Exportar PDF', icon: 'download' },
 ];
 
 export function createAdminLayout(content: HTMLElement, title: string = 'Admin'): HTMLElement {

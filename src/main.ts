@@ -24,6 +24,7 @@ import {
   createProductFormPage,
 } from "./admin/pages/ProductsPage";
 import { createHistoryPage } from "./admin/pages/HistoryPage";
+import { createExportPDFPage } from "./admin/pages/ExportPDFPage";
 
 /**
  * Create the public catalog page
@@ -124,6 +125,12 @@ function initApp(): void {
     {
       path: "/admin/history",
       component: () => createHistoryPage(),
+      guard: authGuard,
+      redirectTo: "/admin/login",
+    },
+    {
+      path: "/admin/export-pdf",
+      component: () => createExportPDFPage(),
       guard: authGuard,
       redirectTo: "/admin/login",
     },
