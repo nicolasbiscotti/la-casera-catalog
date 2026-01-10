@@ -138,19 +138,7 @@ export function createProductCard(product: Product): HTMLElement {
         </div>
       ` : ''}
 
-      ${!isUnavailable ? `
-        <div class="mt-3 pt-3 border-t border-warm-100">
-          <a 
-            href="${whatsappLink}" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="btn-whatsapp w-full justify-center text-sm py-2"
-          >
-            ${createWhatsAppIcon({ size: 16 })}
-            Consultar
-          </a>
-        </div>
-      ` : ''}
+      
     </div>
   `;
 
