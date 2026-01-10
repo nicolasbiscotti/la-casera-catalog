@@ -16,10 +16,14 @@ Aplicación web para catálogo de precios de fiambrería/almacén, con panel de 
 
 ### Para Administradores (Privado)
 
-- 🔜 CRUD de categorías, marcas y productos
+- ✅ Login con autenticación
+- ✅ Dashboard con estadísticas
+- ✅ CRUD de categorías
+- ✅ CRUD de marcas
+- ✅ CRUD de productos con precios múltiples
+- ✅ Historial de cambios de precios
 - 🔜 Actualización masiva de precios (CSV)
-- 🔜 Historial de cambios de precios
-- 🔜 Dashboard con métricas básicas
+- 🔜 Métricas avanzadas
 
 ## 🛠️ Stack Tecnológico
 
@@ -61,6 +65,13 @@ pnpm firebase:emulators
 ```
 
 La aplicación estará disponible en `http://localhost:3000`
+
+**Acceso al Panel Admin:**
+
+- URL: `http://localhost:3000/#/admin/login`
+- Credenciales demo:
+  - Admin: `admin@lacasera.com` / `admin123`
+  - Editor: `editor@lacasera.com` / `editor123`
 
 ### Build de Producción
 
@@ -215,3 +226,5 @@ await db.collection("adminUsers").doc(userId).set({
 MIT
 
 ---
+
+Desarrollado con ❤️ para fiambrerías y almacenes
