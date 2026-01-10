@@ -70,7 +70,7 @@ export function createCategoryAccordion(category: CategoryWithBrands): HTMLEleme
 
   accordion.innerHTML = `
     <button 
-      class="category-header"
+      class="category-header flex items-center justify-between p-4 cursor-pointer select-none hover:bg-warm-50 transition-colors w-full text-left"
       aria-expanded="${isExpanded}"
     >
       <div class="flex items-center gap-3">
