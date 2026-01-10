@@ -226,5 +226,3 @@ await db.collection("adminUsers").doc(userId).set({
 MIT
 
 ---
-
-Desarrollado con ❤️ para fiambrerías y almacenes
