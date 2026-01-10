@@ -21,7 +21,7 @@ export function createHeader(): HTMLElement {
         </div>
         <div>
           <h1 class="font-display text-xl sm:text-2xl font-bold text-warm-900">
-            Fiambrería
+            La Casera
           </h1>
           <p class="text-xs sm:text-sm text-warm-500 -mt-0.5">
             Catálogo de Precios

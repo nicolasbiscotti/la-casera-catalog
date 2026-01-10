@@ -7,7 +7,7 @@ import { createWhatsAppIcon } from './icons';
 
 // Configure store WhatsApp number here
 const STORE_WHATSAPP = '5491112345678'; // Replace with actual number
-const STORE_NAME = 'Fiambrería';
+const STORE_NAME = 'La Casera';
 
 export function createFooter(): HTMLElement {
   const footer = document.createElement('footer');

@@ -1,6 +1,6 @@
 # 🥩 La Casera - Catálogo de Precios
 
-Aplicación web para catálogo de precios de fiambrería/almacén, con panel de administración seguro.
+Aplicación web para catálogo de precios de La Casera/almacén, con panel de administración seguro.
 
 ## 📋 Características
 
