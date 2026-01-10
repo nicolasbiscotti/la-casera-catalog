@@ -349,4 +349,75 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Truncate text */
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Spin animation for loaders */
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+/* ============================================================
+   ADMIN PANEL SPECIFIC STYLES
+   ============================================================ */
+
+/* Admin form inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: var(--color-brand-500);
+}
+
+/* Radio button styling */
+input[type="radio"] {
+  accent-color: var(--color-brand-500);
+}
+
+/* Admin table styles */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+}
+
+/* Admin sidebar active link indicator */
+.admin-nav-active {
+  position: relative;
+}
+
+.admin-nav-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background-color: var(--color-brand-500);
+  border-radius: 0 2px 2px 0;
 }
