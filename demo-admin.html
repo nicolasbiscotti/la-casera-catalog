@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>La Casera - Panel de Administración</title>
+    <meta name="description" content="Panel de administración de La Casera" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#fef7ee",
+                100: "#fdecd3",
+                200: "#fad5a5",
+                300: "#f6b86d",
+                400: "#f19132",
+                500: "#ee7512",
+                600: "#df5a08",
+                700: "#b94309",
+                800: "#93350f",
+                900: "#772e10",
+                950: "#401506",
+              },
+              warm: {
+                50: "#faf9f7",
+                100: "#f3f1ed",
+                200: "#e5e1d8",
+                300: "#d3ccbe",
+                400: "#bdb3a0",
+                500: "#ac9d87",
+                600: "#9f8d77",
+                700: "#847462",
+                800: "#6c5f53",
+                900: "#594f45",
+                950: "#2f2924",
+              },
+            },
+            fontFamily: {
+              display: ["Playfair Display", "Georgia", "serif"],
+              body: ["Source Sans 3", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Source Sans 3", system-ui, sans-serif;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Playfair Display", Georgia, serif;
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slide-up {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+      }
+      .animate-slide-up {
+        animation: slide-up 0.4s ease-out;
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-warm-100 text-warm-900">
+    <div id="app"></div>
+
+    <script>
+      // ============================================================
+      // ICONS
+      // ============================================================
+      const icons = {
+        store:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>',
+        dashboard:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>',
+        categories:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10h10V2Z"/><path d="M22 12h-10v10h10V12Z"/><path d="M12 12H2v10h10V12Z"/><path d="M22 2h-10v10h10V2Z"/></svg>',
+        brands:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>',
+        products:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+        history:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+        download:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+        logout:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>',
+        menu: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>',
+        x: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+        plus: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+        edit: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+        trash:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
+        check:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>',
+        eye: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+        eyeOff:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+        search:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+        arrowLeft:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>',
+        save: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+        alertCircle:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+        user: '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+        toggle:
+          '<svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="6"/><circle cx="8" cy="12" r="2"/></svg>',
+      };
+      const icon = (name, cls = 'w-5 h-5') => `<span class="inline-flex items-center justify-center ${cls}">${icons[name] || ''}</span>`;
+
+      // ============================================================
+      // MOCK DATA
+      // ============================================================
+      const mockUsers = [
+        {
+          email: "admin@lacasera.com",
+          password: "admin123",
+          name: "Administrador",
+          role: "admin",
+        },
+        {
+          email: "editor@lacasera.com",
+          password: "editor123",
+          name: "Editor",
+          role: "editor",
+        },
+      ];
+
+      let mockCategories = [
+        {
+          id: "cat-1",
+          name: "Fiambres",
+          slug: "fiambres",
+          iconName: "meat",
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          id: "cat-2",
+          name: "Quesos",
+          slug: "quesos",
+          iconName: "cheese",
+          isActive: true,
+          sortOrder: 2,
+        },
+        {
+          id: "cat-3",
+          name: "Lácteos",
+          slug: "lacteos",
+          iconName: "milk",
+          isActive: true,
+          sortOrder: 3,
+        },
+        {
+          id: "cat-4",
+          name: "Almacén",
+          slug: "almacen",
+          iconName: "store",
+          isActive: true,
+          sortOrder: 4,
+        },
+      ];
+
+      let mockBrands = [
+        { id: "brand-1", name: "Paladini", isActive: true, sortOrder: 1 },
+        { id: "brand-2", name: "Cagnoli", isActive: true, sortOrder: 2 },
+        { id: "brand-3", name: "Santa Rosa", isActive: true, sortOrder: 3 },
+        { id: "brand-4", name: "Verónica", isActive: true, sortOrder: 4 },
+        { id: "brand-5", name: "La Serenísima", isActive: true, sortOrder: 5 },
+      ];
+
+      let mockProducts = [
+        {
+          id: "prod-1",
+          name: "Jamón Cocido Natural",
+          brandId: "brand-1",
+          categoryId: "cat-1",
+          prices: [{ type: "weight", pricePerKg: 8500 }],
+          isAvailable: true,
+        },
+        {
+          id: "prod-2",
+          name: "Salame Milán",
+          brandId: "brand-1",
+          categoryId: "cat-1",
+          prices: [{ type: "weight", pricePerKg: 12000 }],
+          isAvailable: true,
+        },
+        {
+          id: "prod-3",
+          name: "Queso Sardo",
+          brandId: "brand-3",
+          categoryId: "cat-2",
+          prices: [
+            {
+              type: "fraction",
+              prices: { whole: 28000, half: 15000, quarter: 8000 },
+              fractionLabel: "horma",
+            },
+          ],
+          isAvailable: true,
+        },
+        {
+          id: "prod-4",
+          name: "Queso Cremoso",
+          brandId: "brand-3",
+          categoryId: "cat-2",
+          prices: [{ type: "weight", pricePerKg: 7500 }],
+          isAvailable: true,
+        },
+        {
+          id: "prod-5",
+          name: "Leche Entera",
+          brandId: "brand-5",
+          categoryId: "cat-3",
+          prices: [{ type: "unit", price: 1200, unitLabel: "litro" }],
+          isAvailable: true,
+        },
+        {
+          id: "prod-6",
+          name: "Manteca",
+          brandId: "brand-5",
+          categoryId: "cat-3",
+          prices: [{ type: "unit", price: 2500, unitLabel: "pan 200g" }],
+          isAvailable: false,
+        },
+      ];
+
+      let priceHistory = [];
+
+      // ============================================================
+      // STATE & ROUTING
+      // ============================================================
+      const state = {
+        currentUser: null,
+        currentPage: "login",
+        currentId: null,
+        sidebarOpen: false,
+        toast: null,
+      };
+
+      function navigate(page, id = null) {
+        state.currentPage = page;
+        state.currentId = id;
+        state.sidebarOpen = false;
+        render();
+      }
+
+      function showToast(message, type = "success") {
+        state.toast = { message, type };
+        render();
+        setTimeout(() => {
+          state.toast = null;
+          render();
+        }, 3000);
+      }
+
+      // ============================================================
+      // AUTH
+      // ============================================================
+      function login(email, password) {
+        const user = mockUsers.find(
+          (u) => u.email === email && u.password === password
+        );
+        if (user) {
+          state.currentUser = user;
+          navigate("dashboard");
+          showToast(`Bienvenido, ${user.name}!`);
+          return true;
+        }
+        return false;
+      }
+
+      function logout() {
+        state.currentUser = null;
+        navigate("login");
+      }
+
+      // ============================================================
+      // UTILITIES
+      // ============================================================
+      const formatCurrency = (amount) =>
+        new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: "ARS",
+          minimumFractionDigits: 0,
+        }).format(amount);
+      const generateId = () => "id-" + Math.random().toString(36).substr(2, 9);
+      const slugify = (text) =>
+        text
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+      // ============================================================
+      // PAGES
+      // ============================================================
+
+      function renderLoginPage() {
+        return `
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-100 to-warm-200 p-4">
+          <div class="w-full max-w-md animate-slide-up">
+            <div class="text-center mb-8">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
+                ${icon("store", "w-8 h-8 text-white")}
+              </div>
+              <h1 class="text-2xl font-bold text-warm-800 font-display">La Casera</h1>
+              <p class="text-warm-500">Panel de Administración</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+              <form id="login-form" class="space-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Email</label>
+                  <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border-2 border-warm-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all" placeholder="admin@lacasera.com"/>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Contraseña</label>
+                  <div class="relative">
+                    <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl border-2 border-warm-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all pr-12" placeholder="••••••••"/>
+                    <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600">${icon(
+                      "eye"
+                    )}</button>
+                  </div>
+                </div>
+                <div id="login-error" class="hidden text-red-600 text-sm bg-red-50 p-3 rounded-lg"></div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors">
+                  Iniciar Sesión
+                </button>
+              </form>
+              <div class="mt-6 p-4 bg-warm-50 rounded-xl">
+                <p class="text-xs text-warm-500 mb-2">Credenciales de prueba:</p>
+                <p class="text-xs text-warm-600"><strong>Admin:</strong> admin@lacasera.com / admin123</p>
+                <p class="text-xs text-warm-600"><strong>Editor:</strong> editor@lacasera.com / editor123</p>
+              </div>
+            </div>
+            <p class="text-center mt-6 text-sm text-warm-500">
+              <a href="demo.html" class="text-brand-600 hover:underline">← Volver al catálogo público</a>
+            </p>
+          </div>
+        </div>
+      `;
+      }
+
+      function renderSidebar() {
+        const navItems = [
+          { page: "dashboard", label: "Dashboard", icon: "dashboard" },
+          { page: "categories", label: "Categorías", icon: "categories" },
+          { page: "brands", label: "Marcas", icon: "brands" },
+          { page: "products", label: "Productos", icon: "products" },
+          { page: "history", label: "Historial", icon: "history" },
+          { page: "export", label: "Exportar PDF", icon: "download" },
+        ];
+        return `
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-warm-900 transform ${
+          state.sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 transition-transform duration-300">
+          <div class="flex flex-col h-full">
+            <div class="p-4 border-b border-warm-800">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">${icon(
+                  "store",
+                  "w-5 h-5 text-white"
+                )}</div>
+                <div>
+                  <h1 class="font-display font-bold text-white">La Casera</h1>
+                  <p class="text-xs text-warm-400">Admin Panel</p>
+                </div>
+              </div>
+            </div>
+            <nav class="flex-1 p-4 space-y-1">
+              ${navItems
+                .map(
+                  (item) => `
+                <button onclick="navigate('${
+                  item.page
+                }')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    state.currentPage === item.page ||
+                    state.currentPage.startsWith(item.page)
+                      ? "bg-brand-500 text-white"
+                      : "text-warm-300 hover:bg-warm-800 hover:text-white"
+                  }">
+                  ${icon(item.icon, "w-5 h-5")}
+                  <span class="font-medium">${item.label}</span>
+                </button>
+              `
+                )
+                .join("")}
+            </nav>
+            <div class="p-4 border-t border-warm-800">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-warm-700 flex items-center justify-center">${icon(
+                  "user",
+                  "w-5 h-5 text-warm-300"
+                )}</div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-white truncate">${
+                    state.currentUser?.name
+                  }</p>
+                  <p class="text-xs text-warm-400 truncate">${
+                    state.currentUser?.email
+                  }</p>
+                </div>
+              </div>
+              <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-warm-800 text-warm-300 hover:bg-warm-700 hover:text-white transition-colors">
+                ${icon("logout", "w-4 h-4")}
+                <span class="text-sm">Cerrar Sesión</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+        ${
+          state.sidebarOpen
+            ? `<div class="fixed inset-0 bg-black/50 z-40 lg:hidden" onclick="state.sidebarOpen = false; render();"></div>`
+            : ""
+        }
+      `;
+      }
+
+      function renderHeader(title) {
+        return `
+        <header class="sticky top-0 z-30 bg-white border-b border-warm-200 px-4 lg:px-6 py-4">
+          <div class="flex items-center gap-4">
+            <button onclick="state.sidebarOpen = true; render();" class="lg:hidden p-2 rounded-lg hover:bg-warm-100">${icon(
+              "menu"
+            )}</button>
+            <h1 class="text-xl font-display font-bold text-warm-800">${title}</h1>
+          </div>
+        </header>
+      `;
+      }
+
+      function renderDashboard() {
+        const stats = [
+          {
+            label: "Categorías",
+            value: mockCategories.length,
+            icon: "categories",
+            color: "bg-blue-500",
+          },
+          {
+            label: "Marcas",
+            value: mockBrands.length,
+            icon: "brands",
+            color: "bg-green-500",
+          },
+          {
+            label: "Productos",
+            value: mockProducts.length,
+            icon: "products",
+            color: "bg-brand-500",
+          },
+          {
+            label: "Disponibles",
+            value: mockProducts.filter((p) => p.isAvailable).length,
+            icon: "check",
+            color: "bg-emerald-500",
+          },
+        ];
+        return `
+        ${renderHeader("Dashboard")}
+        <main class="p-4 lg:p-6 space-y-6">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            ${stats
+              .map(
+                (s) => `
+              <div class="bg-white rounded-xl border border-warm-200 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg ${
+                    s.color
+                  } flex items-center justify-center">${icon(
+                  s.icon,
+                  "w-5 h-5 text-white"
+                )}</div>
+                  <div>
+                    <p class="text-2xl font-bold text-warm-800">${s.value}</p>
+                    <p class="text-xs text-warm-500">${s.label}</p>
+                  </div>
+                </div>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+          <div class="bg-white rounded-xl border border-warm-200 p-6">
+            <h2 class="font-display font-semibold text-warm-800 mb-4">Acciones Rápidas</h2>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <button onclick="navigate('products-new')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                ${icon("plus", "w-6 h-6 text-brand-500")}
+                <span class="text-sm font-medium text-warm-700">Nuevo Producto</span>
+              </button>
+              <button onclick="navigate('categories-new')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                ${icon("categories", "w-6 h-6 text-brand-500")}
+                <span class="text-sm font-medium text-warm-700">Nueva Categoría</span>
+              </button>
+              <button onclick="navigate('export')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                ${icon("download", "w-6 h-6 text-brand-500")}
+                <span class="text-sm font-medium text-warm-700">Exportar PDF</span>
+              </button>
+              <button onclick="navigate('history')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-warm-200 hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                ${icon("history", "w-6 h-6 text-brand-500")}
+                <span class="text-sm font-medium text-warm-700">Ver Historial</span>
+              </button>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-warm-200 p-6">
+            <h2 class="font-display font-semibold text-warm-800 mb-4">Productos Recientes</h2>
+            <div class="space-y-3">
+              ${mockProducts
+                .slice(0, 5)
+                .map((p) => {
+                  const brand = mockBrands.find((b) => b.id === p.brandId);
+                  return `
+                  <div class="flex items-center justify-between p-3 rounded-lg bg-warm-50">
+                    <div>
+                      <p class="font-medium text-warm-800">${p.name}</p>
+                      <p class="text-sm text-warm-500">${brand?.name || ""}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                      p.isAvailable
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }">
+                      ${p.isAvailable ? "Disponible" : "Sin stock"}
+                    </span>
+                  </div>
+                `;
+                })
+                .join("")}
+            </div>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderCategoriesList() {
+        return `
+        ${renderHeader("Categorías")}
+        <main class="p-4 lg:p-6">
+          <div class="bg-white rounded-xl border border-warm-200">
+            <div class="p-4 border-b border-warm-100 flex items-center justify-between">
+              <h2 class="font-display font-semibold text-warm-800">Todas las Categorías</h2>
+              <button onclick="navigate('categories-new')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors">
+                ${icon("plus", "w-4 h-4")}
+                Nueva
+              </button>
+            </div>
+            <div class="divide-y divide-warm-100">
+              ${mockCategories
+                .map(
+                  (cat) => `
+                <div class="p-4 flex items-center justify-between hover:bg-warm-50">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600">${icon(
+                      "categories"
+                    )}</div>
+                    <div>
+                      <p class="font-medium text-warm-800">${cat.name}</p>
+                      <p class="text-sm text-warm-500">${
+                        mockProducts.filter((p) => p.categoryId === cat.id)
+                          .length
+                      } productos</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                      cat.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }">${cat.isActive ? "Activo" : "Inactivo"}</span>
+                    <button onclick="navigate('categories-edit', '${
+                      cat.id
+                    }')" class="p-2 rounded-lg hover:bg-warm-200 text-warm-600">${icon(
+                    "edit",
+                    "w-4 h-4"
+                  )}</button>
+                    <button onclick="deleteCategory('${
+                      cat.id
+                    }')" class="p-2 rounded-lg hover:bg-red-100 text-red-600">${icon(
+                    "trash",
+                    "w-4 h-4"
+                  )}</button>
+                  </div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderCategoryForm() {
+        const isEdit = state.currentId && state.currentId !== "new";
+        const cat = isEdit
+          ? mockCategories.find((c) => c.id === state.currentId)
+          : null;
+        return `
+        ${renderHeader(isEdit ? "Editar Categoría" : "Nueva Categoría")}
+        <main class="p-4 lg:p-6">
+          <button onclick="navigate('categories')" class="flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6">${icon(
+            "arrowLeft",
+            "w-4 h-4"
+          )} Volver</button>
+          <div class="bg-white rounded-xl border border-warm-200 max-w-xl">
+            <div class="p-4 border-b border-warm-100">
+              <h2 class="font-display font-semibold text-warm-800">${
+                isEdit ? "Editar Categoría" : "Nueva Categoría"
+              }</h2>
+            </div>
+            <form id="category-form" class="p-6 space-y-4">
+              <input type="hidden" id="cat-id" value="${cat?.id || ""}"/>
+              <div>
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Nombre *</label>
+                <input type="text" id="cat-name" required value="${
+                  cat?.name || ""
+                }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"/>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Orden</label>
+                <input type="number" id="cat-order" min="0" value="${
+                  cat?.sortOrder ?? 0
+                }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"/>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="checkbox" id="cat-active" ${
+                  cat?.isActive !== false ? "checked" : ""
+                } class="w-5 h-5 rounded border-warm-300 text-brand-500"/>
+                <label for="cat-active" class="text-sm font-medium text-warm-700">Categoría activa</label>
+              </div>
+              <div class="flex gap-3 pt-4 border-t border-warm-100">
+                <button type="submit" class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+                  ${icon("save", "w-4 h-4")} Guardar
+                </button>
+                <button type="button" onclick="navigate('categories')" class="px-6 py-2.5 rounded-lg text-warm-600 font-medium hover:bg-warm-100">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderBrandsList() {
+        return `
+        ${renderHeader("Marcas")}
+        <main class="p-4 lg:p-6">
+          <div class="bg-white rounded-xl border border-warm-200">
+            <div class="p-4 border-b border-warm-100 flex items-center justify-between">
+              <h2 class="font-display font-semibold text-warm-800">Todas las Marcas</h2>
+              <button onclick="navigate('brands-new')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+                ${icon("plus", "w-4 h-4")} Nueva
+              </button>
+            </div>
+            <div class="divide-y divide-warm-100">
+              ${mockBrands
+                .map(
+                  (brand) => `
+                <div class="p-4 flex items-center justify-between hover:bg-warm-50">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600">${icon(
+                      "brands"
+                    )}</div>
+                    <div>
+                      <p class="font-medium text-warm-800">${brand.name}</p>
+                      <p class="text-sm text-warm-500">${
+                        mockProducts.filter((p) => p.brandId === brand.id)
+                          .length
+                      } productos</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                      brand.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }">${brand.isActive ? "Activo" : "Inactivo"}</span>
+                    <button onclick="navigate('brands-edit', '${
+                      brand.id
+                    }')" class="p-2 rounded-lg hover:bg-warm-200 text-warm-600">${icon(
+                    "edit",
+                    "w-4 h-4"
+                  )}</button>
+                    <button onclick="deleteBrand('${
+                      brand.id
+                    }')" class="p-2 rounded-lg hover:bg-red-100 text-red-600">${icon(
+                    "trash",
+                    "w-4 h-4"
+                  )}</button>
+                  </div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderBrandForm() {
+        const isEdit = state.currentId && state.currentId !== "new";
+        const brand = isEdit
+          ? mockBrands.find((b) => b.id === state.currentId)
+          : null;
+        return `
+        ${renderHeader(isEdit ? "Editar Marca" : "Nueva Marca")}
+        <main class="p-4 lg:p-6">
+          <button onclick="navigate('brands')" class="flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6">${icon(
+            "arrowLeft",
+            "w-4 h-4"
+          )} Volver</button>
+          <div class="bg-white rounded-xl border border-warm-200 max-w-xl">
+            <div class="p-4 border-b border-warm-100">
+              <h2 class="font-display font-semibold text-warm-800">${
+                isEdit ? "Editar Marca" : "Nueva Marca"
+              }</h2>
+            </div>
+            <form id="brand-form" class="p-6 space-y-4">
+              <input type="hidden" id="brand-id" value="${brand?.id || ""}"/>
+              <div>
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Nombre *</label>
+                <input type="text" id="brand-name" required value="${
+                  brand?.name || ""
+                }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"/>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Orden</label>
+                <input type="number" id="brand-order" min="0" value="${
+                  brand?.sortOrder ?? 0
+                }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"/>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="checkbox" id="brand-active" ${
+                  brand?.isActive !== false ? "checked" : ""
+                } class="w-5 h-5 rounded border-warm-300 text-brand-500"/>
+                <label for="brand-active" class="text-sm font-medium text-warm-700">Marca activa</label>
+              </div>
+              <div class="flex gap-3 pt-4 border-t border-warm-100">
+                <button type="submit" class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+                  ${icon("save", "w-4 h-4")} Guardar
+                </button>
+                <button type="button" onclick="navigate('brands')" class="px-6 py-2.5 rounded-lg text-warm-600 font-medium hover:bg-warm-100">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderProductsList() {
+        return `
+        ${renderHeader("Productos")}
+        <main class="p-4 lg:p-6">
+          <div class="bg-white rounded-xl border border-warm-200">
+            <div class="p-4 border-b border-warm-100 flex items-center justify-between">
+              <h2 class="font-display font-semibold text-warm-800">Todos los Productos</h2>
+              <button onclick="navigate('products-new')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+                ${icon("plus", "w-4 h-4")} Nuevo
+              </button>
+            </div>
+            <div class="divide-y divide-warm-100">
+              ${mockProducts
+                .map((prod) => {
+                  const brand = mockBrands.find((b) => b.id === prod.brandId);
+                  const cat = mockCategories.find(
+                    (c) => c.id === prod.categoryId
+                  );
+                  const price = prod.prices[0];
+                  let priceText = "-";
+                  if (price.type === "unit")
+                    priceText = `${formatCurrency(price.price)}/${
+                      price.unitLabel
+                    }`;
+                  else if (price.type === "weight")
+                    priceText = `${formatCurrency(price.pricePerKg)}/kg`;
+                  else if (price.type === "fraction")
+                    priceText = `${formatCurrency(price.prices.quarter)} (1/4)`;
+                  return `
+                  <div class="p-4 flex items-center justify-between hover:bg-warm-50">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500">${icon(
+                        "products"
+                      )}</div>
+                      <div>
+                        <p class="font-medium text-warm-800">${prod.name}</p>
+                        <p class="text-sm text-warm-500">${
+                          brand?.name || ""
+                        } · ${cat?.name || ""}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <span class="font-semibold text-brand-600">${priceText}</span>
+                      <button onclick="toggleProductAvailability('${
+                        prod.id
+                      }')" class="p-2 rounded-lg hover:bg-warm-200 ${
+                    prod.isAvailable ? "text-green-600" : "text-red-600"
+                  }">${icon(
+                    prod.isAvailable ? "eye" : "eyeOff",
+                    "w-4 h-4"
+                  )}</button>
+                      <button onclick="navigate('products-edit', '${
+                        prod.id
+                      }')" class="p-2 rounded-lg hover:bg-warm-200 text-warm-600">${icon(
+                    "edit",
+                    "w-4 h-4"
+                  )}</button>
+                      <button onclick="deleteProduct('${
+                        prod.id
+                      }')" class="p-2 rounded-lg hover:bg-red-100 text-red-600">${icon(
+                    "trash",
+                    "w-4 h-4"
+                  )}</button>
+                    </div>
+                  </div>
+                `;
+                })
+                .join("")}
+            </div>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderProductForm() {
+        const isEdit = state.currentId && state.currentId !== "new";
+        const prod = isEdit
+          ? mockProducts.find((p) => p.id === state.currentId)
+          : null;
+        const priceType = prod?.prices[0]?.type || "unit";
+        return `
+        ${renderHeader(isEdit ? "Editar Producto" : "Nuevo Producto")}
+        <main class="p-4 lg:p-6">
+          <button onclick="navigate('products')" class="flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6">${icon(
+            "arrowLeft",
+            "w-4 h-4"
+          )} Volver</button>
+          <div class="bg-white rounded-xl border border-warm-200 max-w-2xl">
+            <div class="p-4 border-b border-warm-100">
+              <h2 class="font-display font-semibold text-warm-800">${
+                isEdit ? "Editar Producto" : "Nuevo Producto"
+              }</h2>
+            </div>
+            <form id="product-form" class="p-6 space-y-4">
+              <input type="hidden" id="prod-id" value="${prod?.id || ""}"/>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Nombre *</label>
+                  <input type="text" id="prod-name" required value="${
+                    prod?.name || ""
+                  }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"/>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Marca *</label>
+                  <select id="prod-brand" required class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none">
+                    <option value="">Seleccionar</option>
+                    ${mockBrands
+                      .map(
+                        (b) =>
+                          `<option value="${b.id}" ${
+                            prod?.brandId === b.id ? "selected" : ""
+                          }>${b.name}</option>`
+                      )
+                      .join("")}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Categoría *</label>
+                <select id="prod-category" required class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none">
+                  <option value="">Seleccionar</option>
+                  ${mockCategories
+                    .map(
+                      (c) =>
+                        `<option value="${c.id}" ${
+                          prod?.categoryId === c.id ? "selected" : ""
+                        }>${c.name}</option>`
+                    )
+                    .join("")}
+                </select>
+              </div>
+              <div class="border-t border-warm-100 pt-4">
+                <label class="block text-sm font-medium text-warm-700 mb-2">Tipo de Precio</label>
+                <div class="flex flex-wrap gap-4 mb-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="priceType" value="unit" ${
+                      priceType === "unit" ? "checked" : ""
+                    } class="text-brand-500"/>
+                    <span class="text-sm">Por unidad</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="priceType" value="weight" ${
+                      priceType === "weight" ? "checked" : ""
+                    } class="text-brand-500"/>
+                    <span class="text-sm">Por peso (kg)</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="priceType" value="fraction" ${
+                      priceType === "fraction" ? "checked" : ""
+                    } class="text-brand-500"/>
+                    <span class="text-sm">Por fracción</span>
+                  </label>
+                </div>
+                <div id="price-fields">
+                  <div id="unit-fields" class="${
+                    priceType === "unit" ? "" : "hidden"
+                  } grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-warm-700 mb-1.5">Precio</label>
+                      <input type="number" id="unit-price" min="0" value="${
+                        prod?.prices[0]?.type === "unit"
+                          ? prod.prices[0].price
+                          : ""
+                      }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-warm-700 mb-1.5">Unidad</label>
+                      <input type="text" id="unit-label" value="${
+                        prod?.prices[0]?.type === "unit"
+                          ? prod.prices[0].unitLabel
+                          : ""
+                      }" placeholder="litro, paquete, etc" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                    </div>
+                  </div>
+                  <div id="weight-fields" class="${
+                    priceType === "weight" ? "" : "hidden"
+                  }">
+                    <label class="block text-sm font-medium text-warm-700 mb-1.5">Precio por kg</label>
+                    <input type="number" id="weight-price" min="0" value="${
+                      prod?.prices[0]?.type === "weight"
+                        ? prod.prices[0].pricePerKg
+                        : ""
+                    }" class="w-full max-w-xs px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                  </div>
+                  <div id="fraction-fields" class="${
+                    priceType === "fraction" ? "" : "hidden"
+                  } grid grid-cols-3 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-warm-700 mb-1.5">Entera</label>
+                      <input type="number" id="fraction-whole" min="0" value="${
+                        prod?.prices[0]?.type === "fraction"
+                          ? prod.prices[0].prices.whole
+                          : ""
+                      }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-warm-700 mb-1.5">1/2</label>
+                      <input type="number" id="fraction-half" min="0" value="${
+                        prod?.prices[0]?.type === "fraction"
+                          ? prod.prices[0].prices.half
+                          : ""
+                      }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-warm-700 mb-1.5">1/4</label>
+                      <input type="number" id="fraction-quarter" min="0" value="${
+                        prod?.prices[0]?.type === "fraction"
+                          ? prod.prices[0].prices.quarter
+                          : ""
+                      }" class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <input type="checkbox" id="prod-available" ${
+                  prod?.isAvailable !== false ? "checked" : ""
+                } class="w-5 h-5 rounded border-warm-300 text-brand-500"/>
+                <label for="prod-available" class="text-sm font-medium text-warm-700">Producto disponible</label>
+              </div>
+              <div class="flex gap-3 pt-4 border-t border-warm-100">
+                <button type="submit" class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+                  ${icon("save", "w-4 h-4")} Guardar
+                </button>
+                <button type="button" onclick="navigate('products')" class="px-6 py-2.5 rounded-lg text-warm-600 font-medium hover:bg-warm-100">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </main>
+      `;
+      }
+
+      function renderHistoryPage() {
+        return `
+        ${renderHeader("Historial de Precios")}
+        <main class="p-4 lg:p-6">
+          <div class="bg-white rounded-xl border border-warm-200 p-6">
+            ${
+              priceHistory.length === 0
+                ? `
+              <div class="text-center py-12">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-warm-100 flex items-center justify-center">${icon(
+                  "history",
+                  "w-8 h-8 text-warm-400"
+                )}</div>
+                <h3 class="font-display text-lg font-semibold text-warm-700 mb-1">Sin historial</h3>
+                <p class="text-warm-500 text-sm">Los cambios de precios aparecerán aquí</p>
+              </div>
+            `
+                : `
+              <div class="space-y-4">
+                ${priceHistory
+                  .map(
+                    (h) => `
+                  <div class="flex items-start gap-4 p-4 rounded-lg bg-warm-50">
+                    <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">${icon(
+                      "history",
+                      "w-5 h-5 text-brand-600"
+                    )}</div>
+                    <div>
+                      <p class="font-medium text-warm-800">${h.productName}</p>
+                      <p class="text-sm text-warm-500">${new Date(
+                        h.date
+                      ).toLocaleString("es-AR")}</p>
+                      <div class="mt-2 flex gap-3 text-sm">
+                        <span class="px-2 py-1 rounded bg-red-50 text-red-700">Antes: ${
+                          h.oldPrice
+                        }</span>
+                        <span>→</span>
+                        <span class="px-2 py-1 rounded bg-green-50 text-green-700">Después: ${
+                          h.newPrice
+                        }</span>
+                      </div>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            `
+            }
+          </div>
+        </main>
+      `;
+      }
+
+      function renderExportPage() {
+        return `
+        ${renderHeader("Exportar PDF")}
+        <main class="p-4 lg:p-6">
+          <div class="bg-white rounded-xl border border-warm-200 max-w-xl">
+            <div class="p-4 border-b border-warm-100">
+              <h2 class="font-display font-semibold text-warm-800">Exportar Catálogo a PDF</h2>
+              <p class="text-sm text-warm-500 mt-1">Genera un PDF profesional del catálogo</p>
+            </div>
+            <div class="p-6 space-y-6">
+              <div class="bg-warm-50 rounded-lg p-4">
+                <h4 class="font-medium text-warm-700 mb-3">El PDF incluirá:</h4>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                  <div><p class="text-2xl font-bold text-brand-600">${
+                    mockCategories.length
+                  }</p><p class="text-xs text-warm-500">Categorías</p></div>
+                  <div><p class="text-2xl font-bold text-brand-600">${
+                    mockBrands.length
+                  }</p><p class="text-xs text-warm-500">Marcas</p></div>
+                  <div><p class="text-2xl font-bold text-brand-600">${
+                    mockProducts.length
+                  }</p><p class="text-xs text-warm-500">Productos</p></div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" id="include-unavailable" class="w-5 h-5 rounded border-warm-300 text-brand-500"/>
+                  <span class="text-sm text-warm-700">Incluir productos sin stock</span>
+                </label>
+              </div>
+              <button id="generate-pdf" class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600">
+                ${icon("download")} Generar y Descargar PDF
+              </button>
+            </div>
+          </div>
+          <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-xl">
+            <div class="flex gap-3">
+              ${icon(
+                "alertCircle",
+                "w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5"
+              )}
+              <div>
+                <p class="font-medium text-blue-800">Demo</p>
+                <p class="text-sm text-blue-700">En esta demo, el botón simula la generación del PDF. En el proyecto completo se genera un PDF real usando jsPDF.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+      `;
+      }
+
+      // ============================================================
+      // CRUD ACTIONS
+      // ============================================================
+      function deleteCategory(id) {
+        const hasProducts = mockProducts.some((p) => p.categoryId === id);
+        if (hasProducts) {
+          showToast("No se puede eliminar: tiene productos asociados", "error");
+          return;
+        }
+        if (confirm("¿Eliminar esta categoría?")) {
+          mockCategories = mockCategories.filter((c) => c.id !== id);
+          showToast("Categoría eliminada");
+          render();
+        }
+      }
+
+      function deleteBrand(id) {
+        const hasProducts = mockProducts.some((p) => p.brandId === id);
+        if (hasProducts) {
+          showToast("No se puede eliminar: tiene productos asociados", "error");
+          return;
+        }
+        if (confirm("¿Eliminar esta marca?")) {
+          mockBrands = mockBrands.filter((b) => b.id !== id);
+          showToast("Marca eliminada");
+          render();
+        }
+      }
+
+      function deleteProduct(id) {
+        if (confirm("¿Eliminar este producto?")) {
+          mockProducts = mockProducts.filter((p) => p.id !== id);
+          showToast("Producto eliminado");
+          render();
+        }
+      }
+
+      function toggleProductAvailability(id) {
+        const prod = mockProducts.find((p) => p.id === id);
+        if (prod) {
+          prod.isAvailable = !prod.isAvailable;
+          showToast(
+            prod.isAvailable
+              ? "Producto marcado como disponible"
+              : "Producto marcado como sin stock"
+          );
+          render();
+        }
+      }
+
+      // ============================================================
+      // RENDER
+      // ============================================================
+      function render() {
+        const app = document.getElementById("app");
+        let content = "";
+
+        if (!state.currentUser) {
+          content = renderLoginPage();
+        } else {
+          let pageContent = "";
+          switch (state.currentPage) {
+            case "dashboard":
+              pageContent = renderDashboard();
+              break;
+            case "categories":
+              pageContent = renderCategoriesList();
+              break;
+            case "categories-new":
+            case "categories-edit":
+              pageContent = renderCategoryForm();
+              break;
+            case "brands":
+              pageContent = renderBrandsList();
+              break;
+            case "brands-new":
+            case "brands-edit":
+              pageContent = renderBrandForm();
+              break;
+            case "products":
+              pageContent = renderProductsList();
+              break;
+            case "products-new":
+            case "products-edit":
+              pageContent = renderProductForm();
+              break;
+            case "history":
+              pageContent = renderHistoryPage();
+              break;
+            case "export":
+              pageContent = renderExportPage();
+              break;
+            default:
+              pageContent = renderDashboard();
+          }
+          content = `
+          ${renderSidebar()}
+          <div class="lg:ml-64 min-h-screen bg-warm-50">
+            ${pageContent}
+          </div>
+        `;
+        }
+
+        // Toast
+        if (state.toast) {
+          content += `
+          <div class="fixed bottom-4 right-4 z-50 animate-slide-up">
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg ${
+              state.toast.type === "error" ? "bg-red-500" : "bg-green-500"
+            } text-white">
+              ${icon(
+                state.toast.type === "error" ? "alertCircle" : "check",
+                "w-5 h-5"
+              )}
+              <span class="font-medium">${state.toast.message}</span>
+            </div>
+          </div>
+        `;
+        }
+
+        app.innerHTML = content;
+        attachEventListeners();
+      }
+
+      function attachEventListeners() {
+        // Login form
+        document
+          .getElementById("login-form")
+          ?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            if (!login(email, password)) {
+              const errorEl = document.getElementById("login-error");
+              errorEl.textContent = "Email o contraseña incorrectos";
+              errorEl.classList.remove("hidden");
+            }
+          });
+
+        // Toggle password visibility
+        document
+          .getElementById("toggle-password")
+          ?.addEventListener("click", () => {
+            const input = document.getElementById("password");
+            input.type = input.type === "password" ? "text" : "password";
+          });
+
+        // Category form
+        document
+          .getElementById("category-form")
+          ?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const id = document.getElementById("cat-id").value;
+            const data = {
+              name: document.getElementById("cat-name").value,
+              slug: slugify(document.getElementById("cat-name").value),
+              sortOrder:
+                parseInt(document.getElementById("cat-order").value) || 0,
+              isActive: document.getElementById("cat-active").checked,
+            };
+            if (id) {
+              const cat = mockCategories.find((c) => c.id === id);
+              Object.assign(cat, data);
+              showToast("Categoría actualizada");
+            } else {
+              mockCategories.push({ id: generateId(), ...data });
+              showToast("Categoría creada");
+            }
+            navigate("categories");
+          });
+
+        // Brand form
+        document
+          .getElementById("brand-form")
+          ?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const id = document.getElementById("brand-id").value;
+            const data = {
+              name: document.getElementById("brand-name").value,
+              sortOrder:
+                parseInt(document.getElementById("brand-order").value) || 0,
+              isActive: document.getElementById("brand-active").checked,
+            };
+            if (id) {
+              const brand = mockBrands.find((b) => b.id === id);
+              Object.assign(brand, data);
+              showToast("Marca actualizada");
+            } else {
+              mockBrands.push({ id: generateId(), ...data });
+              showToast("Marca creada");
+            }
+            navigate("brands");
+          });
+
+        // Product form
+        document
+          .getElementById("product-form")
+          ?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const id = document.getElementById("prod-id").value;
+            const priceType = document.querySelector(
+              'input[name="priceType"]:checked'
+            ).value;
+            let prices = [];
+            if (priceType === "unit") {
+              prices = [
+                {
+                  type: "unit",
+                  price:
+                    parseInt(document.getElementById("unit-price").value) || 0,
+                  unitLabel:
+                    document.getElementById("unit-label").value || "unidad",
+                },
+              ];
+            } else if (priceType === "weight") {
+              prices = [
+                {
+                  type: "weight",
+                  pricePerKg:
+                    parseInt(document.getElementById("weight-price").value) ||
+                    0,
+                },
+              ];
+            } else if (priceType === "fraction") {
+              prices = [
+                {
+                  type: "fraction",
+                  prices: {
+                    whole:
+                      parseInt(
+                        document.getElementById("fraction-whole").value
+                      ) || 0,
+                    half:
+                      parseInt(
+                        document.getElementById("fraction-half").value
+                      ) || 0,
+                    quarter:
+                      parseInt(
+                        document.getElementById("fraction-quarter").value
+                      ) || 0,
+                  },
+                  fractionLabel: "horma",
+                },
+              ];
+            }
+            const data = {
+              name: document.getElementById("prod-name").value,
+              brandId: document.getElementById("prod-brand").value,
+              categoryId: document.getElementById("prod-category").value,
+              prices,
+              isAvailable: document.getElementById("prod-available").checked,
+            };
+            if (id) {
+              const prod = mockProducts.find((p) => p.id === id);
+              // Log price change
+              const oldPrice = prod.prices[0];
+              const newPrice = prices[0];
+              if (JSON.stringify(oldPrice) !== JSON.stringify(newPrice)) {
+                priceHistory.unshift({
+                  productName: prod.name,
+                  date: new Date().toISOString(),
+                  oldPrice: formatPriceDisplay(oldPrice),
+                  newPrice: formatPriceDisplay(newPrice),
+                });
+              }
+              Object.assign(prod, data);
+              showToast("Producto actualizado");
+            } else {
+              mockProducts.push({ id: generateId(), ...data });
+              showToast("Producto creado");
+            }
+            navigate("products");
+          });
+
+        // Price type toggle
+        document
+          .querySelectorAll('input[name="priceType"]')
+          .forEach((radio) => {
+            radio.addEventListener("change", (e) => {
+              const type = e.target.value;
+              document
+                .getElementById("unit-fields")
+                .classList.toggle("hidden", type !== "unit");
+              document
+                .getElementById("weight-fields")
+                .classList.toggle("hidden", type !== "weight");
+              document
+                .getElementById("fraction-fields")
+                .classList.toggle("hidden", type !== "fraction");
+            });
+          });
+
+        // Export PDF
+        document
+          .getElementById("generate-pdf")
+          ?.addEventListener("click", () => {
+            showToast("PDF generado exitosamente (simulado)");
+          });
+      }
+
+      function formatPriceDisplay(price) {
+        if (price.type === "unit")
+          return `${formatCurrency(price.price)}/${price.unitLabel}`;
+        if (price.type === "weight")
+          return `${formatCurrency(price.pricePerKg)}/kg`;
+        if (price.type === "fraction")
+          return `${formatCurrency(price.prices.quarter)} (1/4)`;
+        return "-";
+      }
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", render);
+    </script>
+  </body>
+</html>
