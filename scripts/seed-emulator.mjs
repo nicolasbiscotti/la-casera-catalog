@@ -1,0 +1,188 @@
+/**
+ * Seed script for Firebase Emulator
+ * 
+ * This script populates the local Firebase emulator with sample data
+ * for development and testing purposes.
+ * 
+ * Usage: pnpm seed:local
+ * 
+ * Prerequisites:
+ * - Firebase emulators must be running (pnpm firebase:emulators)
+ * - Node.js 22+
+ */
+
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  connectFirestoreEmulator,
+  collection,
+  doc,
+  setDoc,
+  writeBatch
+} from 'firebase/firestore';
+import {
+  getAuth,
+  connectAuthEmulator,
+  createUserWithEmailAndPassword
+} from 'firebase/auth';
+
+// Firebase config (doesn't matter for emulator, but required for init)
+const firebaseConfig = {
+  apiKey: 'demo-api-key',
+  authDomain: 'demo-project.firebaseapp.com',
+  projectId: 'demo-project',
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Connect to emulators
+connectFirestoreEmulator(db, '127.0.0.1', 8080);
+connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+
+// Sample data
+const categories = [
+  { id: 'cat-1', name: 'Fiambres', slug: 'fiambres', iconName: 'meat', isActive: true, sortOrder: 1 },
+  { id: 'cat-2', name: 'Quesos', slug: 'quesos', iconName: 'cheese', isActive: true, sortOrder: 2 },
+  { id: 'cat-3', name: 'Lácteos', slug: 'lacteos', iconName: 'milk', isActive: true, sortOrder: 3 },
+  { id: 'cat-4', name: 'Almacén', slug: 'almacen', iconName: 'store', isActive: true, sortOrder: 4 },
+];
+
+const brands = [
+  { id: 'brand-1', name: 'Paladini', isActive: true, sortOrder: 1 },
+  { id: 'brand-2', name: 'Cagnoli', isActive: true, sortOrder: 2 },
+  { id: 'brand-3', name: 'Santa Rosa', isActive: true, sortOrder: 3 },
+  { id: 'brand-4', name: 'Verónica', isActive: true, sortOrder: 4 },
+  { id: 'brand-5', name: 'La Serenísima', isActive: true, sortOrder: 5 },
+  { id: 'brand-6', name: 'Sancor', isActive: true, sortOrder: 6 },
+  { id: 'brand-7', name: 'La Campagnola', isActive: true, sortOrder: 7 },
+];
+
+const products = [
+  // Fiambres - Paladini
+  { id: 'prod-1', name: 'Jamón Cocido Natural', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 8500, availableWeights: [100, 250, 500, 1000] }], isAvailable: true, tags: ['premium'] },
+  { id: 'prod-2', name: 'Salame Milán', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 12000, availableWeights: [100, 250, 500] }], isAvailable: true },
+  { id: 'prod-3', name: 'Mortadela con Aceitunas', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 6500, availableWeights: [250, 500, 1000] }], isAvailable: true },
+  { id: 'prod-4', name: 'Panceta Ahumada', brandId: 'brand-1', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 9800, availableWeights: [100, 250, 500] }], isAvailable: true, tags: ['premium'] },
+  // Fiambres - Cagnoli
+  { id: 'prod-5', name: 'Jamón Crudo', brandId: 'brand-2', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 18000, availableWeights: [100, 250, 500] }], isAvailable: true, tags: ['premium', 'importado'] },
+  { id: 'prod-6', name: 'Bondiola', brandId: 'brand-2', categoryId: 'cat-1', prices: [{ type: 'weight', pricePerKg: 15000, availableWeights: [100, 250, 500] }], isAvailable: true },
+  // Quesos - Santa Rosa
+  { id: 'prod-7', name: 'Queso Sardo', brandId: 'brand-3', categoryId: 'cat-2', prices: [{ type: 'fraction', prices: { whole: 28000, half: 15000, quarter: 8000 }, fractionLabel: 'horma' }], isAvailable: true, tags: ['premium'] },
+  { id: 'prod-8', name: 'Queso Cremoso', brandId: 'brand-3', categoryId: 'cat-2', prices: [{ type: 'weight', pricePerKg: 7500, availableWeights: [250, 500, 1000] }], isAvailable: true },
+  { id: 'prod-9', name: 'Provolone', brandId: 'brand-3', categoryId: 'cat-2', prices: [{ type: 'weight', pricePerKg: 9200, availableWeights: [250, 500] }], isAvailable: true },
+  // Quesos - Verónica
+  { id: 'prod-10', name: 'Queso Rallado', brandId: 'brand-4', categoryId: 'cat-2', prices: [{ type: 'unit', price: 2800, unitLabel: 'paquete 250g' }], isAvailable: true },
+  { id: 'prod-11', name: 'Queso Port Salut', brandId: 'brand-4', categoryId: 'cat-2', prices: [{ type: 'fraction', prices: { whole: 18000, half: 9500, quarter: 5000 }, fractionLabel: 'horma' }], isAvailable: true },
+  // Lácteos - La Serenísima
+  { id: 'prod-12', name: 'Leche Entera', brandId: 'brand-5', categoryId: 'cat-3', prices: [{ type: 'unit', price: 1200, unitLabel: 'litro' }], isAvailable: true },
+  { id: 'prod-13', name: 'Manteca', brandId: 'brand-5', categoryId: 'cat-3', prices: [{ type: 'unit', price: 2500, unitLabel: 'pan 200g' }], isAvailable: true },
+  { id: 'prod-14', name: 'Crema de Leche', brandId: 'brand-5', categoryId: 'cat-3', prices: [{ type: 'unit', price: 1800, unitLabel: '200ml' }], isAvailable: true },
+  // Lácteos - Sancor
+  { id: 'prod-15', name: 'Yogur Firme Vainilla', brandId: 'brand-6', categoryId: 'cat-3', prices: [{ type: 'unit', price: 950, unitLabel: 'pote 190g' }], isAvailable: true },
+  { id: 'prod-16', name: 'Dulce de Leche', brandId: 'brand-6', categoryId: 'cat-3', prices: [{ type: 'unit', price: 3200, unitLabel: 'pote 400g' }], isAvailable: true, tags: ['premium'] },
+  // Almacén - La Campagnola
+  { id: 'prod-17', name: 'Aceitunas Verdes', brandId: 'brand-7', categoryId: 'cat-4', prices: [{ type: 'unit', price: 2100, unitLabel: 'frasco 220g' }], isAvailable: true },
+  { id: 'prod-18', name: 'Aceitunas Negras', brandId: 'brand-7', categoryId: 'cat-4', prices: [{ type: 'unit', price: 2400, unitLabel: 'frasco 220g' }], isAvailable: false },
+  { id: 'prod-19', name: 'Tomates Peritas', brandId: 'brand-7', categoryId: 'cat-4', prices: [{ type: 'unit', price: 1100, unitLabel: 'lata 400g' }], isAvailable: true },
+  { id: 'prod-20', name: 'Arvejas', brandId: 'brand-7', categoryId: 'cat-4', prices: [{ type: 'unit', price: 980, unitLabel: 'lata 350g' }], isAvailable: true },
+];
+
+const adminUsers = [
+  {
+    email: 'admin@lacasera.com',
+    password: 'admin123',
+    displayName: 'Administrador',
+    role: 'admin',
+  },
+  {
+    email: 'editor@lacasera.com',
+    password: 'editor123',
+    displayName: 'Editor',
+    role: 'editor',
+  },
+];
+
+async function seed() {
+  console.log('🌱 Starting seed...\n');
+
+  try {
+    // Seed categories
+    console.log('📁 Seeding categories...');
+    const catBatch = writeBatch(db);
+    for (const category of categories) {
+      const docRef = doc(db, 'environments/development/categories', category.id);
+      catBatch.set(docRef, { ...category, createdAt: new Date(), updatedAt: new Date() });
+    }
+    await catBatch.commit();
+    console.log(`   ✓ ${categories.length} categories created\n`);
+
+    // Seed brands
+    console.log('🏷️  Seeding brands...');
+    const brandBatch = writeBatch(db);
+    for (const brand of brands) {
+      const docRef = doc(db, 'environments/development/brands', brand.id);
+      brandBatch.set(docRef, { ...brand, createdAt: new Date(), updatedAt: new Date() });
+    }
+    await brandBatch.commit();
+    console.log(`   ✓ ${brands.length} brands created\n`);
+
+    // Seed products
+    console.log('📦 Seeding products...');
+    const prodBatch = writeBatch(db);
+    for (const product of products) {
+      const docRef = doc(db, 'environments/development/products', product.id);
+      prodBatch.set(docRef, { ...product, createdAt: new Date(), updatedAt: new Date() });
+    }
+    await prodBatch.commit();
+    console.log(`   ✓ ${products.length} products created\n`);
+
+    // Seed admin users
+    console.log('👤 Seeding admin users...');
+    for (const admin of adminUsers) {
+      try {
+        // Create auth user
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          admin.email,
+          admin.password
+        );
+        const uid = userCredential.user.uid;
+
+        // Create admin user document
+        await setDoc(doc(db, 'environments/development/adminUsers', uid), {
+          email: admin.email,
+          displayName: admin.displayName,
+          role: admin.role,
+          isActive: true,
+          createdAt: new Date(),
+        });
+
+        console.log(`   ✓ ${admin.email} (${admin.role})`);
+      } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+          console.log(`   ⚠ ${admin.email} already exists, skipping...`);
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    console.log('\n✅ Seed completed successfully!\n');
+    console.log('📝 Admin credentials:');
+    console.log('   Email: admin@lacasera.com');
+    console.log('   Password: admin123\n');
+    console.log('   Email: editor@lacasera.com');
+    console.log('   Password: editor123\n');
+
+  } catch (error) {
+    console.error('❌ Seed failed:', error);
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+
+seed();
