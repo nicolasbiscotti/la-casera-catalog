@@ -15,7 +15,7 @@ export function createLoginPage(): HTMLElement {
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg mb-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg mb-4">
           ${createIcon('store', { size: 32, className: 'text-white' })}
         </div>
         <h1 class="font-display text-2xl font-bold text-warm-900">La Casera</h1>
@@ -27,7 +27,7 @@ export function createLoginPage(): HTMLElement {
         <h2 class="font-display text-xl font-semibold text-warm-800 mb-6">Iniciar Sesión</h2>
 
         <!-- Error message -->
-        <div id="error-message" class="hidden mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+        <div id="error-message" class="hidden mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm  items-center gap-2">
           ${createIcon('alertCircle', { size: 18 })}
           <span id="error-text"></span>
         </div>
@@ -136,9 +136,11 @@ function setupLoginHandlers(page: HTMLElement): void {
   authStore.subscribe(state => {
     if (state.error) {
       errorMessage.classList.remove('hidden');
+      errorMessage.classList.add('flex');
       errorText.textContent = state.error;
     } else {
       errorMessage.classList.add('hidden');
+      errorMessage.classList.remove('flex');
     }
 
     if (state.isLoading) {
