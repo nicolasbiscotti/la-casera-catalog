@@ -1,48 +1,29 @@
 /**
- * Seed script for Firebase Emulator
+ * Seed script for Firebase Emulator (Fixed)
  *
- * This script populates the local Firebase emulator with sample data
- * for development and testing purposes.
+ * Uses firebase-admin to bypass security rules for initial seeding.
  *
  * Usage: pnpm seed:local
- *
- * Prerequisites:
- * - Firebase emulators must be running (pnpm firebase:emulators)
- * - Node.js 22+
  */
 
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  connectFirestoreEmulator,
-  collection,
-  doc,
-  setDoc,
-  writeBatch,
-} from "firebase/firestore";
-import {
-  getAuth,
-  connectAuthEmulator,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
-// Firebase config (doesn't matter for emulator, but required for init)
-const firebaseConfig = {
-  apiKey: "demo-api-key",
-  authDomain: "demo-project.firebaseapp.com",
-  projectId: "demo-project",
-};
+// 1. Set environment variables to force Admin SDK to use Emulators
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+process.env.GCLOUD_PROJECT = "tiger-catalog";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// 2. Initialize Admin App (Privileged Access)
+const app = initializeApp({
+  projectId: "tiger-catalog",
+});
 
-// Connect to emulators
-connectFirestoreEmulator(db, "127.0.0.1", 8080);
-connectAuthEmulator(auth, "http://127.0.0.1:9099");
+const db = getFirestore();
+const auth = getAuth();
 
-// Sample data
+// --- Data Definitions (Same as before) ---
 const categories = [
   {
     id: "cat-1",
@@ -310,88 +291,99 @@ const adminUsers = [
   },
 ];
 
+// Get collection path based on environment
+function getCollectionPath(collectionName) {
+  return `environments/development/${collectionName}`;
+}
+
 async function seed() {
-  console.log("🌱 Starting seed...\n");
+  console.log("🌱 Starting seed (Admin SDK)...\n");
 
   try {
-    // Seed categories
-    console.log("📁 Seeding categories...");
-    const catBatch = writeBatch(db);
-    for (const category of categories) {
-      const docRef = doc(
-        db,
-        "environments/development/categories",
-        category.id,
-      );
-      catBatch.set(docRef, {
-        ...category,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-    await catBatch.commit();
-    console.log(`   ✓ ${categories.length} categories created\n`);
+    const now = Timestamp.now();
 
-    // Seed brands
-    console.log("🏷️  Seeding brands...");
-    const brandBatch = writeBatch(db);
-    for (const brand of brands) {
-      const docRef = doc(db, "environments/development/brands", brand.id);
-      brandBatch.set(docRef, {
-        ...brand,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-    await brandBatch.commit();
-    console.log(`   ✓ ${brands.length} brands created\n`);
-
-    // Seed products
-    console.log("📦 Seeding products...");
-    const prodBatch = writeBatch(db);
-    for (const product of products) {
-      const docRef = doc(db, "environments/development/products", product.id);
-      prodBatch.set(docRef, {
-        ...product,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-    await prodBatch.commit();
-    console.log(`   ✓ ${products.length} products created\n`);
-
-    // Seed admin users
+    // First, create admin users in Auth and Firestore
     console.log("👤 Seeding admin users...");
-    for (const admin of adminUsers) {
+    for (const adminData of adminUsers) {
+      let uid;
+      // ... inside the user creation loop ...
+
       try {
-        // Create auth user
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          admin.email,
-          admin.password,
-        );
-        const uid = userCredential.user.uid;
-
-        // Create admin user document
-        await setDoc(doc(db, "environments/development/adminUsers", uid), {
-          email: admin.email,
-          displayName: admin.displayName,
-          role: admin.role,
-          isActive: true,
-          createdAt: new Date(),
+        // 1. Create auth user
+        const userRecord = await auth.createUser({
+          email: adminData.email,
+          password: adminData.password,
+          displayName: adminData.displayName,
         });
+        uid = userRecord.uid;
 
-        console.log(`   ✓ ${admin.email} (${admin.role})`);
+        // 🔥 CRITICAL NEW STEP: Set the Custom Claim
+        // This is what the new security rules look for!
+        await auth.setCustomUserClaims(uid, { admin: true }); // <--- ADD THIS
+
+        console.log(
+          `   ✓ ${adminData.email} - Created UID: ${uid} (Admin Claim Set)`,
+        );
       } catch (error) {
         if (error.code === "auth/email-already-in-use") {
-          console.log(`   ⚠ ${admin.email} already exists, skipping...`);
+          // If user exists, we MUST ensure they have the claim
+          const userRecord = await auth.getUserByEmail(adminData.email);
+          uid = userRecord.uid;
+
+          // Re-apply claim just in case
+          await auth.setCustomUserClaims(uid, { admin: true }); // <--- ADD THIS
+          console.log(`   ⚠ ${adminData.email} exists. Admin claim refreshed.`);
         } else {
           throw error;
         }
       }
-    }
 
-    console.log("\n✅ Seed completed successfully!\n");
+      // Create admin user document (Bypasses Rules)
+      // Note: Admin SDK uses db.doc().set(), not setDoc(doc(), ...)
+      await db.doc(`${getCollectionPath("adminUsers")}/${uid}`).set({
+        email: adminData.email,
+        displayName: adminData.displayName,
+        role: adminData.role,
+        isActive: true,
+        createdAt: now,
+      });
+    }
+    console.log("");
+
+    // Seed categories
+    console.log("📁 Seeding categories...");
+    for (const category of categories) {
+      await db.doc(`${getCollectionPath("categories")}/${category.id}`).set({
+        ...category,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    console.log(`   ✓ ${categories.length} categories created\n`);
+
+    // Seed brands
+    console.log("🏷️  Seeding brands...");
+    for (const brand of brands) {
+      await db.doc(`${getCollectionPath("brands")}/${brand.id}`).set({
+        ...brand,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    console.log(`   ✓ ${brands.length} brands created\n`);
+
+    // Seed products
+    console.log("📦 Seeding products...");
+    for (const product of products) {
+      await db.doc(`${getCollectionPath("products")}/${product.id}`).set({
+        ...product,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    console.log(`   ✓ ${products.length} products created\n`);
+
+    console.log("✅ Seed completed successfully!\n");
     console.log("📝 Admin credentials:");
     console.log("   Email: admin@lacasera.com");
     console.log("   Password: admin123\n");
