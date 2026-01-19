@@ -1,16 +1,24 @@
 /**
  * Admin Authentication Store
  * Manages authentication state for the admin panel
- * In production, this connects to Firebase Auth
+ * Uses Firebase Auth with Custom Claims
  */
 
-import { createStore } from '@/store/catalogStore';
+import { createStore } from "@/store/catalogStore";
+import {
+  login as firebaseLogin,
+  logout as firebaseLogout,
+  getCurrentAdminUser,
+  onAuthChange,
+  isAdmin as checkIsAdmin,
+} from "@/services/authService";
+import { getAuthInstance } from "@/services/firebase";
 
 export interface AdminUser {
   uid: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: "admin" | "editor" | "viewer";
 }
 
 export interface AuthState {
@@ -29,57 +37,66 @@ const initialState: AuthState = {
 
 export const authStore = createStore<AuthState>(initialState);
 
-// Mock admin users for demo (in production, use Firebase Auth)
-const MOCK_ADMIN_USERS: Record<string, { password: string; user: AdminUser }> = {
-  'admin@lacasera.com': {
-    password: 'admin123',
-    user: {
-      uid: 'admin-001',
-      email: 'admin@lacasera.com',
-      displayName: 'Administrador',
-      role: 'admin',
-    },
-  },
-  'editor@lacasera.com': {
-    password: 'editor123',
-    user: {
-      uid: 'editor-001',
-      email: 'editor@lacasera.com',
-      displayName: 'Editor',
-      role: 'editor',
-    },
-  },
-};
-
-// Session storage key
-const SESSION_KEY = 'la_casera_admin_session';
-
 // Auth actions
 export const authActions = {
   /**
-   * Initialize auth state from session storage
+   * Initialize auth state from Firebase
    */
-  init: (): void => {
+  init: async (): Promise<void> => {
     authStore.setState({ isLoading: true });
-    
+
     try {
-      const session = sessionStorage.getItem(SESSION_KEY);
-      if (session) {
-        const user = JSON.parse(session) as AdminUser;
-        authStore.setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
+      const auth = getAuthInstance();
+
+      // Wait for auth state to be determined
+      return new Promise((resolve) => {
+        const unsubscribe = onAuthChange(async (user) => {
+          unsubscribe();
+
+          if (user && !user.isAnonymous) {
+            // User is logged in (not anonymous)
+            try {
+              const adminUser = await getCurrentAdminUser();
+              if (adminUser) {
+                authStore.setState({
+                  user: {
+                    uid: adminUser.uid,
+                    email: adminUser.email,
+                    displayName: adminUser.displayName || "Admin",
+                    role: adminUser.role,
+                  },
+                  isAuthenticated: true,
+                  isLoading: false,
+                  error: null,
+                });
+              } else {
+                authStore.setState({
+                  user: null,
+                  isAuthenticated: false,
+                  isLoading: false,
+                  error: null,
+                });
+              }
+            } catch {
+              authStore.setState({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+              });
+            }
+          } else {
+            // No user or anonymous user
+            authStore.setState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+          }
+          resolve();
         });
-      } else {
-        authStore.setState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
-      }
+      });
     } catch {
       authStore.setState({
         user: null,
@@ -96,37 +113,49 @@ export const authActions = {
   login: async (email: string, password: string): Promise<boolean> => {
     authStore.setState({ isLoading: true, error: null });
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      const adminUser = await firebaseLogin(email, password);
 
-    const mockUser = MOCK_ADMIN_USERS[email.toLowerCase()];
-    
-    if (!mockUser || mockUser.password !== password) {
       authStore.setState({
+        user: {
+          uid: adminUser.uid,
+          email: adminUser.email,
+          displayName: adminUser.displayName || "Admin",
+          role: adminUser.role,
+        },
+        isAuthenticated: true,
         isLoading: false,
-        error: 'Credenciales inválidas. Intenta de nuevo.',
+        error: null,
       });
+
+      return true;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Credenciales inválidas. Intenta de nuevo.";
+
+      authStore.setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: errorMessage,
+      });
+
       return false;
     }
-
-    // Store session
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(mockUser.user));
-
-    authStore.setState({
-      user: mockUser.user,
-      isAuthenticated: true,
-      isLoading: false,
-      error: null,
-    });
-
-    return true;
   },
 
   /**
    * Logout current user
    */
-  logout: (): void => {
-    sessionStorage.removeItem(SESSION_KEY);
+  logout: async (): Promise<void> => {
+    try {
+      await firebaseLogout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
     authStore.setState({
       user: null,
       isAuthenticated: false,
@@ -145,7 +174,7 @@ export const authActions = {
   /**
    * Check if user has specific permission
    */
-  hasPermission: (requiredRole: 'admin' | 'editor' | 'viewer'): boolean => {
+  hasPermission: (requiredRole: "admin" | "editor" | "viewer"): boolean => {
     const { user } = authStore.getState();
     if (!user) return false;
 
@@ -157,17 +186,24 @@ export const authActions = {
 
     return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
   },
+
+  /**
+   * Check if current user has admin Custom Claim (fast check)
+   */
+  checkAdminClaim: async (): Promise<boolean> => {
+    return await checkIsAdmin();
+  },
 };
 
 // Auth guard for protected routes
 export const authGuard = (): boolean => {
   const { isAuthenticated, isLoading } = authStore.getState();
-  
+
   // If still loading, wait
   if (isLoading) {
     return false;
   }
-  
+
   return isAuthenticated;
 };
 

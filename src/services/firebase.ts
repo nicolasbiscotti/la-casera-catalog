@@ -1,6 +1,8 @@
 /**
  * Firebase initialization and service exports
  * Handles app initialization, emulator connections, and exports services
+ *
+ * SECURITY: Uses Anonymous Auth for public catalog access (bot protection)
  */
 
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
@@ -9,7 +11,14 @@ import {
   connectFirestoreEmulator,
   Firestore,
 } from "firebase/firestore";
-import { getAuth, connectAuthEmulator, Auth } from "firebase/auth";
+import {
+  getAuth,
+  connectAuthEmulator,
+  signInAnonymously,
+  onAuthStateChanged,
+  Auth,
+  User,
+} from "firebase/auth";
 import {
   firebaseConfig,
   useEmulators,
@@ -20,6 +29,7 @@ let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
 let emulatorsConnected = false;
+let authInitialized = false;
 
 /**
  * Initialize Firebase app and services
@@ -67,6 +77,60 @@ export function initializeFirebase(): {
 }
 
 /**
+ * Ensure user is authenticated (at least anonymously)
+ * Required for Firestore reads due to security rules
+ *
+ * This is invisible to the user - they don't need to log in
+ * to view the public catalog, but we still have a valid session
+ * for bot protection.
+ */
+export async function ensureAuthenticated(): Promise<User> {
+  const auth = getAuthInstance();
+
+  // If already signed in, return current user
+  if (auth.currentUser) {
+    return auth.currentUser;
+  }
+
+  // Wait for auth state to be determined
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe();
+
+      if (user) {
+        resolve(user);
+      } else {
+        // No user - sign in anonymously
+        try {
+          const credential = await signInAnonymously(auth);
+          console.log("🔐 Signed in anonymously for catalog access");
+          resolve(credential.user);
+        } catch (error) {
+          console.error("Anonymous auth failed:", error);
+          reject(error);
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Initialize auth and ensure we have a valid session
+ * Call this when the app starts
+ */
+export async function initializeAuth(): Promise<void> {
+  if (authInitialized) return;
+
+  try {
+    await ensureAuthenticated();
+    authInitialized = true;
+  } catch (error) {
+    console.error("Failed to initialize auth:", error);
+    throw error;
+  }
+}
+
+/**
  * Get Firestore instance
  */
 export function getDb(): Firestore {
@@ -84,6 +148,35 @@ export function getAuthInstance(): Auth {
     initializeFirebase();
   }
   return auth;
+}
+
+/**
+ * Check if user has admin custom claim
+ */
+export async function hasAdminClaim(): Promise<boolean> {
+  const auth = getAuthInstance();
+  const user = auth.currentUser;
+
+  if (!user) return false;
+
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    return tokenResult.claims.admin === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Force refresh the auth token (useful after login to get updated claims)
+ */
+export async function refreshAuthToken(): Promise<void> {
+  const auth = getAuthInstance();
+  const user = auth.currentUser;
+
+  if (user) {
+    await user.getIdToken(true);
+  }
 }
 
 // Auto-initialize on import

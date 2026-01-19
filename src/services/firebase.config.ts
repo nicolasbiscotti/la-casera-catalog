@@ -52,11 +52,11 @@ export const useEmulators =
 
 export const emulatorConfig = {
   firestore: {
-    host: "localhost",
+    host: "127.0.0.1",
     port: 8080,
   },
   auth: {
-    host: "localhost",
+    host: "127.0.0.1",
     port: 9099,
   },
 };

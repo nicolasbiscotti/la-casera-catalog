@@ -15,7 +15,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // --- MAIN COLLECTIONS ---
+    // --- MAIN COLLECTIONS (Production) ---
 
     match /categories/{categoryId} {
       allow read: if isAuthenticated(); // 🔒 Prevents open scraping
@@ -40,7 +40,12 @@ service cloud.firestore {
     // Admins can read their own profile; nobody else can read or write it via Client SDK
     match /adminUsers/{userId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
-      allow write: if false; 
+      allow write: if false; // STRICTLY SERVER-SIDE ONLY
+    }
+
+    match /analytics/{docId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isAdmin();
     }
 
     // --- ENVIRONMENT COLLECTIONS (Dev/Staging) ---
@@ -48,7 +53,7 @@ service cloud.firestore {
 
       // Analytics: Authenticated users can log events (create), but only Admins can manage them
       allow create: if collection == 'analytics' && isAuthenticated();
-      allow update, delete: if collection == 'analytics' && isAdmin();
+      allow read, update, delete: if collection == 'analytics' && isAdmin();
 
       // Catalog: Auth to Read, Admin Claim to Write
       allow read: if collection in ['categories', 'brands', 'products'] && isAuthenticated();

@@ -4,7 +4,17 @@
  */
 
 // Firebase initialization
-export { initializeFirebase, getDb, getAuthInstance, db, auth } from './firebase';
+export { 
+  initializeFirebase, 
+  getDb, 
+  getAuthInstance, 
+  db, 
+  auth,
+  ensureAuthenticated,
+  initializeAuth,
+  hasAdminClaim,
+  refreshAuthToken,
+} from './firebase';
 
 // Configuration
 export { 
@@ -72,6 +82,7 @@ export {
   getCurrentUser,
   getCurrentAdminUser,
   isAuthenticated,
+  isAnonymous,
   isAdmin,
   onAuthChange,
   waitForAuth,

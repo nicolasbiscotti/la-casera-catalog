@@ -1,9 +1,14 @@
 /**
- * Seed script for Firebase Emulator (Fixed)
+ * Seed script for Firebase Emulator
  *
  * Uses firebase-admin to bypass security rules for initial seeding.
+ * Sets Custom Claims for admin users.
  *
  * Usage: pnpm seed:local
+ *
+ * Prerequisites:
+ * - Firebase emulators must be running (pnpm firebase:emulators)
+ * - Node.js 22+
  */
 
 import { initializeApp } from "firebase-admin/app";
@@ -13,17 +18,17 @@ import { getAuth } from "firebase-admin/auth";
 // 1. Set environment variables to force Admin SDK to use Emulators
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
-process.env.GCLOUD_PROJECT = "tiger-catalog";
+process.env.GCLOUD_PROJECT = "demo-project";
 
 // 2. Initialize Admin App (Privileged Access)
 const app = initializeApp({
-  projectId: "tiger-catalog",
+  projectId: "demo-project",
 });
 
 const db = getFirestore();
 const auth = getAuth();
 
-// --- Data Definitions (Same as before) ---
+// --- Data Definitions ---
 const categories = [
   {
     id: "cat-1",
@@ -306,10 +311,8 @@ async function seed() {
     console.log("👤 Seeding admin users...");
     for (const adminData of adminUsers) {
       let uid;
-      // ... inside the user creation loop ...
-
       try {
-        // 1. Create auth user
+        // Create auth user (Admin SDK method)
         const userRecord = await auth.createUser({
           email: adminData.email,
           password: adminData.password,
@@ -317,21 +320,28 @@ async function seed() {
         });
         uid = userRecord.uid;
 
-        // 🔥 CRITICAL NEW STEP: Set the Custom Claim
-        // This is what the new security rules look for!
-        await auth.setCustomUserClaims(uid, { admin: true }); // <--- ADD THIS
-
-        console.log(
-          `   ✓ ${adminData.email} - Created UID: ${uid} (Admin Claim Set)`,
-        );
+        // 🔥 CRITICAL: Set the Custom Claim for admin role
+        // This is what the security rules check for!
+        if (adminData.role === "admin") {
+          await auth.setCustomUserClaims(uid, { admin: true });
+          console.log(
+            `   ✓ ${adminData.email} (${adminData.role}) - UID: ${uid} (Admin Claim Set)`,
+          );
+        } else {
+          console.log(
+            `   ✓ ${adminData.email} (${adminData.role}) - UID: ${uid}`,
+          );
+        }
       } catch (error) {
         if (error.code === "auth/email-already-in-use") {
-          // If user exists, we MUST ensure they have the claim
+          // If user exists, fetch their UID and refresh claim
           const userRecord = await auth.getUserByEmail(adminData.email);
           uid = userRecord.uid;
 
           // Re-apply claim just in case
-          await auth.setCustomUserClaims(uid, { admin: true }); // <--- ADD THIS
+          if (adminData.role === "admin") {
+            await auth.setCustomUserClaims(uid, { admin: true });
+          }
           console.log(`   ⚠ ${adminData.email} exists. Admin claim refreshed.`);
         } else {
           throw error;
@@ -339,7 +349,6 @@ async function seed() {
       }
 
       // Create admin user document (Bypasses Rules)
-      // Note: Admin SDK uses db.doc().set(), not setDoc(doc(), ...)
       await db.doc(`${getCollectionPath("adminUsers")}/${uid}`).set({
         email: adminData.email,
         displayName: adminData.displayName,
