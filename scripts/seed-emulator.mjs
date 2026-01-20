@@ -15,14 +15,11 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
-// 1. Set environment variables to force Admin SDK to use Emulators
-process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
-process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
-process.env.GCLOUD_PROJECT = "demo-project";
+// 1. Set environment variables to force Admin SDK to use Emulators (see package.json -> "seed:local")
 
 // 2. Initialize Admin App (Privileged Access)
 const app = initializeApp({
-  projectId: "demo-project",
+  projectId: "tiger-catalog",
 });
 
 const db = getFirestore();
@@ -84,7 +81,7 @@ const products = [
     prices: [
       {
         type: "weight",
-        pricePerKg: 8500,
+        pricePerKg: 7500,
         availableWeights: [100, 250, 500, 1000],
       },
     ],

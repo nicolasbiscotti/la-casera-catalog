@@ -24,7 +24,7 @@
     "firebase:emulators:export": "firebase emulators:export ./firebase-data",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
     "firebase:deploy:rules:dry": "firebase deploy --only firestore:rules,firestore:indexes --dry-run",
-    "seed:local": "node scripts/seed-emulator.mjs",
+    "seed:local": "env $(cat .env.local | grep -v '#' | grep -v '^$' | xargs) node scripts/seed-emulator.mjs",
     "clean": "rm -rf dist node_modules/.vite",
     "clean:all": "rm -rf dist node_modules/.vite firebase-data"
   },
