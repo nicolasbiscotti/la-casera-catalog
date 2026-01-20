@@ -188,5 +188,3 @@ la-casera-catalog/
 ## 📄 Licencia
 
 MIT
-
----
