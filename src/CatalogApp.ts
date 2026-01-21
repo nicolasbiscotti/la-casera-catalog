@@ -24,73 +24,100 @@ import {
 } from "@/store";
 import { debounce } from "@/utils";
 
-// Main render function
-function render(): void {
+// Build catalog content based on current state
+function buildCatalogContent(): string {
+  const state = getState();
+
+  if (state.isLoading) {
+    return renderLoading();
+  }
+
+  if (state.error) {
+    return renderError(state.error);
+  }
+
+  if (state.products.length === 0) {
+    return renderEmpty();
+  }
+
+  if (isSearching()) {
+    const filteredProducts = getFilteredProducts();
+    return renderSearchResults(filteredProducts);
+  }
+
+  // Normal catalog view
+  const { categories, products } = state;
+
+  return `
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-sm text-warm-600">
+        ${products.length} productos en ${categories.length} categorías
+      </p>
+      <div class="flex gap-2">
+        <button 
+          id="expand-all" 
+          class="p-2 rounded-lg hover:bg-warm-200 text-warm-600 transition-colors" 
+          title="Expandir todo"
+        >
+          ${icon("expandAll")}
+        </button>
+        <button 
+          id="collapse-all" 
+          class="p-2 rounded-lg hover:bg-warm-200 text-warm-600 transition-colors" 
+          title="Colapsar todo"
+        >
+          ${icon("collapseAll")}
+        </button>
+      </div>
+    </div>
+    <div class="space-y-4">
+      ${categories.map((cat) => renderCategoryAccordion(cat)).join("")}
+    </div>
+  `;
+}
+
+// Update only the catalog content (partial render)
+function renderCatalogContent(): void {
+  const catalogContainer = document.getElementById("catalog-container");
+  if (!catalogContainer) return;
+
+  catalogContainer.innerHTML = buildCatalogContent();
+  attachCatalogListeners();
+}
+
+// Full page render (initial render)
+function renderFullPage(): void {
   const app = document.getElementById("app");
   if (!app) return;
 
-  const state = getState();
-
-  // Build catalog content based on state
-  let catalogContent: string;
-
-  if (state.isLoading) {
-    catalogContent = renderLoading();
-  } else if (state.error) {
-    catalogContent = renderError(state.error);
-  } else if (state.products.length === 0) {
-    catalogContent = renderEmpty();
-  } else if (isSearching()) {
-    const filteredProducts = getFilteredProducts();
-    catalogContent = renderSearchResults(filteredProducts);
-  } else {
-    // Normal catalog view
-    const { categories, products } = state;
-
-    catalogContent = `
-      <div class="flex items-center justify-between mb-4">
-        <p class="text-sm text-warm-600">
-          ${products.length} productos en ${categories.length} categorías
-        </p>
-        <div class="flex gap-2">
-          <button 
-            id="expand-all" 
-            class="p-2 rounded-lg hover:bg-warm-200 text-warm-600 transition-colors" 
-            title="Expandir todo"
-          >
-            ${icon("expandAll")}
-          </button>
-          <button 
-            id="collapse-all" 
-            class="p-2 rounded-lg hover:bg-warm-200 text-warm-600 transition-colors" 
-            title="Colapsar todo"
-          >
-            ${icon("collapseAll")}
-          </button>
-        </div>
-      </div>
-      <div class="space-y-4">
-        ${categories.map((cat) => renderCategoryAccordion(cat)).join("")}
-      </div>
-    `;
-  }
-
-  // Full page layout
   app.innerHTML = `
     <div class="min-h-screen flex flex-col">
       ${renderHeader()}
       ${renderSearchBar()}
       <main class="flex-1 px-4 sm:px-6 py-6">
-        <div class="max-w-4xl mx-auto">
-          ${catalogContent}
+        <div id="catalog-container" class="max-w-4xl mx-auto">
+          ${buildCatalogContent()}
         </div>
       </main>
       ${renderFooter()}
     </div>
   `;
 
-  // Attach event listeners after render
-  attachEventListeners();
+  attachLayoutListeners();
+  attachCatalogListeners();
+}
+
+// Main render function - decides between full or partial render
+function render(): void {
+  const catalogContainer = document.getElementById("catalog-container");
+
+  if (catalogContainer) {
+    // Layout already exists, only update catalog content
+    renderCatalogContent();
+  } else {
+    // First render or layout was destroyed, do full render
+    renderFullPage();
+  }
 }
 
 // Debounced search handler
@@ -98,9 +125,19 @@ const debouncedSearch = debounce((value: string) => {
   setSearchQuery(value);
 }, 300);
 
-// Attach event listeners
-function attachEventListeners(): void {
-  // Search input
+function handleClearSearch(): void {
+  clearSearch(); // Llama al store
+  const searchInput = document.getElementById(
+    "search-input",
+  ) as HTMLInputElement;
+  const clearBtn = document.getElementById("clear-search");
+  if (searchInput) searchInput.value = "";
+  if (clearBtn) clearBtn.classList.add("hidden");
+}
+
+// Attach listeners for the static layout (header, search bar, footer)
+// These only need to be attached once
+function attachLayoutListeners(): void {
   const searchInput = document.getElementById(
     "search-input",
   ) as HTMLInputElement;
@@ -114,22 +151,26 @@ function attachEventListeners(): void {
 
   searchInput?.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      clearSearch();
+      handleClearSearch();
     }
   });
 
   clearSearchBtn?.addEventListener("click", () => {
-    clearSearch();
+    handleClearSearch();
   });
+}
 
-  // Clear search results button
+// Attach listeners for the catalog content
+// These need to be re-attached after each catalog update
+function attachCatalogListeners(): void {
+  // Clear search results button (inside catalog content)
   document
     .getElementById("clear-search-results")
     ?.addEventListener("click", () => {
-      clearSearch();
+      handleClearSearch();
     });
 
-  // Retry button
+  // Retry button (inside catalog content)
   document.getElementById("retry-load")?.addEventListener("click", () => {
     loadCatalog();
   });
