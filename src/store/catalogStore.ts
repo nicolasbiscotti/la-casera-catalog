@@ -1,112 +1,173 @@
-/**
- * Simple state management store
- * Decoupled design allows easy migration to Zustand or other libraries
- */
+import type { Category, Brand, Product, CatalogState } from "@/types";
+import {
+  getActiveCategories,
+  getActiveBrands,
+  getAvailableProducts,
+} from "@/services";
+import { matchesSearch } from "@/utils";
 
-type Listener<T> = (state: T) => void;
-
-export interface Store<T> {
-  getState: () => T;
-  setState: (partial: Partial<T> | ((state: T) => Partial<T>)) => void;
-  subscribe: (listener: Listener<T>) => () => void;
-}
-
-// Create a simple store with subscribe pattern
-export function createStore<T extends object>(initialState: T): Store<T> {
-  let state = initialState;
-  const listeners = new Set<Listener<T>>();
-
-  const getState = () => state;
-
-  const setState = (partial: Partial<T> | ((state: T) => Partial<T>)) => {
-    const nextPartial = typeof partial === 'function' ? partial(state) : partial;
-    state = { ...state, ...nextPartial };
-    listeners.forEach(listener => listener(state));
-  };
-
-  const subscribe = (listener: Listener<T>) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  };
-
-  return { getState, setState, subscribe };
-}
-
-// Catalog UI State
-export interface CatalogState {
-  searchQuery: string;
-  expandedCategories: Set<string>;
-  expandedBrands: Set<string>;
-  isLoading: boolean;
-  error: string | null;
-}
-
-const initialCatalogState: CatalogState = {
-  searchQuery: '',
-  expandedCategories: new Set(),
-  expandedBrands: new Set(),
-  isLoading: false,
+// Initial state
+const initialState: CatalogState = {
+  categories: [],
+  brands: [],
+  products: [],
+  isLoading: true,
   error: null,
+  searchQuery: "",
+  expandedCategories: new Set<string>(),
+  expandedBrands: new Set<string>(),
 };
 
-// Create the catalog store
-export const catalogStore = createStore<CatalogState>(initialCatalogState);
+// Current state
+let state = { ...initialState };
 
-// Action helpers for catalog store
-export const catalogActions = {
-  setSearchQuery: (query: string) => {
-    catalogStore.setState({ searchQuery: query });
-  },
+// Subscribers for state changes
+type Subscriber = (state: CatalogState) => void;
+const subscribers: Set<Subscriber> = new Set();
 
-  toggleCategory: (categoryId: string) => {
-    const { expandedCategories } = catalogStore.getState();
-    const newExpanded = new Set(expandedCategories);
-    
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    
-    catalogStore.setState({ expandedCategories: newExpanded });
-  },
+// Get current state
+export function getState(): CatalogState {
+  return state;
+}
 
-  toggleBrand: (brandId: string) => {
-    const { expandedBrands } = catalogStore.getState();
-    const newExpanded = new Set(expandedBrands);
-    
-    if (newExpanded.has(brandId)) {
-      newExpanded.delete(brandId);
-    } else {
-      newExpanded.add(brandId);
-    }
-    
-    catalogStore.setState({ expandedBrands: newExpanded });
-  },
+// Subscribe to state changes
+export function subscribe(callback: Subscriber): () => void {
+  subscribers.add(callback);
+  return () => subscribers.delete(callback);
+}
 
-  expandAll: (categoryIds: string[], brandIds: string[]) => {
-    catalogStore.setState({
-      expandedCategories: new Set(categoryIds),
-      expandedBrands: new Set(brandIds),
+// Notify all subscribers
+function notifySubscribers(): void {
+  subscribers.forEach((callback) => callback(state));
+}
+
+// Update state
+function setState(updates: Partial<CatalogState>): void {
+  state = { ...state, ...updates };
+  notifySubscribers();
+}
+
+// Load catalog data from Firebase
+export async function loadCatalog(): Promise<void> {
+  setState({ isLoading: true, error: null });
+
+  try {
+    const [categories, brands, products] = await Promise.all([
+      getActiveCategories(),
+      getActiveBrands(),
+      getAvailableProducts(),
+    ]);
+
+    setState({
+      categories,
+      brands,
+      products,
+      isLoading: false,
     });
-  },
-
-  collapseAll: () => {
-    catalogStore.setState({
-      expandedCategories: new Set(),
-      expandedBrands: new Set(),
+  } catch (error) {
+    console.error("Error loading catalog:", error);
+    setState({
+      isLoading: false,
+      error:
+        error instanceof Error ? error.message : "Error al cargar el catálogo",
     });
-  },
+  }
+}
 
-  setLoading: (isLoading: boolean) => {
-    catalogStore.setState({ isLoading });
-  },
+// Search actions
+export function setSearchQuery(query: string): void {
+  setState({ searchQuery: query });
+}
 
-  setError: (error: string | null) => {
-    catalogStore.setState({ error });
-  },
+export function clearSearch(): void {
+  setState({ searchQuery: "" });
+}
 
-  clearSearch: () => {
-    catalogStore.setState({ searchQuery: '' });
-  },
-};
+// Expansion actions
+export function toggleCategory(categoryId: string): void {
+  const expanded = new Set(state.expandedCategories);
+  if (expanded.has(categoryId)) {
+    expanded.delete(categoryId);
+  } else {
+    expanded.add(categoryId);
+  }
+  setState({ expandedCategories: expanded });
+}
+
+export function toggleBrand(brandId: string): void {
+  const expanded = new Set(state.expandedBrands);
+  if (expanded.has(brandId)) {
+    expanded.delete(brandId);
+  } else {
+    expanded.add(brandId);
+  }
+  setState({ expandedBrands: expanded });
+}
+
+export function expandAll(): void {
+  const expandedCategories = new Set(state.categories.map((c) => c.id));
+  const expandedBrands = new Set(state.brands.map((b) => b.id));
+  setState({ expandedCategories, expandedBrands });
+}
+
+export function collapseAll(): void {
+  setState({
+    expandedCategories: new Set(),
+    expandedBrands: new Set(),
+  });
+}
+
+// Selectors
+export function getFilteredProducts(): Product[] {
+  const { products, searchQuery } = state;
+
+  if (!searchQuery.trim()) {
+    return products;
+  }
+
+  return products.filter((product) => {
+    const brand = state.brands.find((b) => b.id === product.brandId);
+    const category = state.categories.find((c) => c.id === product.categoryId);
+
+    return (
+      matchesSearch(product.name, searchQuery) ||
+      (brand && matchesSearch(brand.name, searchQuery)) ||
+      (category && matchesSearch(category.name, searchQuery)) ||
+      product.tags?.some((tag) => matchesSearch(tag, searchQuery))
+    );
+  });
+}
+
+export function getProductsByCategory(categoryId: string): Product[] {
+  return state.products.filter((p) => p.categoryId === categoryId);
+}
+
+export function getProductsByBrand(brandId: string): Product[] {
+  return state.products.filter((p) => p.brandId === brandId);
+}
+
+export function getBrandsByCategory(categoryId: string): Brand[] {
+  const categoryProducts = getProductsByCategory(categoryId);
+  const brandIds = new Set(categoryProducts.map((p) => p.brandId));
+  return state.brands.filter((b) => brandIds.has(b.id));
+}
+
+export function getCategoryById(id: string): Category | undefined {
+  return state.categories.find((c) => c.id === id);
+}
+
+export function getBrandById(id: string): Brand | undefined {
+  return state.brands.find((b) => b.id === id);
+}
+
+export function isSearching(): boolean {
+  return state.searchQuery.trim().length > 0;
+}
+
+export function isCategoryExpanded(categoryId: string): boolean {
+  return state.expandedCategories.has(categoryId);
+}
+
+export function isBrandExpanded(brandId: string): boolean {
+  return state.expandedBrands.has(brandId);
+}
