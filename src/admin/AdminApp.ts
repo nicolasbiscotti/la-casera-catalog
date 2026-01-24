@@ -3,7 +3,7 @@ import {
   renderToast,
   attachLayoutListeners,
   closeSidebar,
-} from './components';
+} from "./components";
 import {
   renderLoginPage,
   attachLoginListeners,
@@ -22,29 +22,28 @@ import {
   attachProductsListeners,
   attachProductFormListeners,
   renderHistoryPage,
+  attachHistoryListeners,
   renderExportPage,
   attachExportListeners,
-} from './pages';
+} from "./pages";
+import { initHistoryPage } from "./pages/HistoryPage";
 import {
   getAuthState,
   subscribeAuth,
   initAuthListener,
   isAuthenticated,
-} from './store/authStore';
-import {
-  subscribeAdmin,
-  loadAdminData,
-} from './store/adminDataStore';
+} from "./store/authStore";
+import { subscribeAdmin, loadAdminData } from "./store/adminDataStore";
 
 // Admin App State
 interface AdminAppState {
   currentPage: string;
   currentId: string | null;
-  toast: { message: string; type: 'success' | 'error' } | null;
+  toast: { message: string; type: "success" | "error" } | null;
 }
 
 let appState: AdminAppState = {
-  currentPage: 'dashboard',
+  currentPage: "dashboard",
   currentId: null,
   toast: null,
 };
@@ -54,14 +53,23 @@ function navigate(page: string, id?: string): void {
   appState.currentPage = page;
   appState.currentId = id || null;
   closeSidebar();
-  render();
+
+  // Initialize history page data when navigating to it
+  if (page === "history") {
+    initHistoryPage().then(() => render());
+  } else {
+    render();
+  }
 }
 
 // Toast
-function showToast(message: string, type: 'success' | 'error' = 'success'): void {
+function showToast(
+  message: string,
+  type: "success" | "error" = "success",
+): void {
   appState.toast = { message, type };
   render();
-  
+
   setTimeout(() => {
     appState.toast = null;
     render();
@@ -70,11 +78,11 @@ function showToast(message: string, type: 'success' | 'error' = 'success'): void
 
 // Main render function
 function render(): void {
-  const app = document.getElementById('app');
+  const app = document.getElementById("app");
   if (!app) return;
-  
+
   const authState = getAuthState();
-  
+
   // Show loading while initializing auth
   if (!authState.isInitialized) {
     app.innerHTML = `
@@ -87,44 +95,48 @@ function render(): void {
     `;
     return;
   }
-  
+
   // Show login if not authenticated
   if (!isAuthenticated()) {
     app.innerHTML = renderLoginPage();
     attachLoginListeners();
     return;
   }
-  
+
   // Render admin panel
-  let pageContent = '';
+  let pageContent = "";
   const { currentPage, currentId } = appState;
-  
+
   // Determine which page to render
-  if (currentId && currentId !== 'new' && !['dashboard', 'history', 'export'].includes(currentPage)) {
+  if (
+    currentId &&
+    currentId !== "new" &&
+    !["dashboard", "history", "export"].includes(currentPage)
+  ) {
     // Edit form
     switch (currentPage) {
-      case 'categories':
+      case "categories":
         pageContent = renderCategoryFormPage(currentId, navigate);
         break;
-      case 'brands':
+      case "brands":
         pageContent = renderBrandFormPage(currentId, navigate);
         break;
-      case 'products':
+      case "products":
         pageContent = renderProductFormPage(currentId, navigate);
         break;
       default:
         pageContent = renderDashboardPage(navigate);
     }
-  } else if (currentId === 'new') {
+  } else if (currentId === "new") {
     // New form
     switch (currentPage) {
-      case 'categories':
+      case "categories":
         pageContent = renderCategoryFormPage(null, navigate);
         break;
-      case 'brands':
+      case "brands":
         pageContent = renderBrandFormPage(null, navigate);
         break;
-      case 'products':
+      case "products":
         pageContent = renderProductFormPage(null, navigate);
         break;
       default:
@@ -133,29 +145,29 @@ function render(): void {
   } else {
     // List pages
     switch (currentPage) {
-      case 'dashboard':
+      case "dashboard":
         pageContent = renderDashboardPage(navigate);
         break;
-      case 'categories':
+      case "categories":
         pageContent = renderCategoriesListPage(navigate);
         break;
-      case 'brands':
+      case "brands":
         pageContent = renderBrandsListPage(navigate);
         break;
-      case 'products':
+      case "products":
         pageContent = renderProductsListPage(navigate);
         break;
-      case 'history':
+      case "history":
         pageContent = renderHistoryPage();
         break;
-      case 'export':
+      case "export":
         pageContent = renderExportPage(showToast);
         break;
       default:
         pageContent = renderDashboardPage(navigate);
     }
   }
-  
+
   // Full layout
   app.innerHTML = `
     <div class="min-h-screen bg-warm-100">
@@ -163,10 +175,10 @@ function render(): void {
       <div class="lg:ml-64">
         ${pageContent}
       </div>
-      ${appState.toast ? renderToast(appState.toast.message, appState.toast.type) : ''}
+      ${appState.toast ? renderToast(appState.toast.message, appState.toast.type) : ""}
     </div>
   `;
-  
+
   // Attach event listeners
   attachLayoutListeners(navigate);
   attachPageListeners();
@@ -175,49 +187,52 @@ function render(): void {
 // Attach page-specific listeners
 function attachPageListeners(): void {
   const { currentPage, currentId } = appState;
-  
-  if (currentId && currentId !== 'new') {
+
+  if (currentId && currentId !== "new") {
     // Edit form listeners
     switch (currentPage) {
-      case 'categories':
+      case "categories":
         attachCategoryFormListeners(navigate, showToast);
         break;
-      case 'brands':
+      case "brands":
         attachBrandFormListeners(navigate, showToast);
         break;
-      case 'products':
+      case "products":
         attachProductFormListeners(navigate, showToast);
         break;
     }
-  } else if (currentId === 'new') {
+  } else if (currentId === "new") {
     // New form listeners
     switch (currentPage) {
-      case 'categories':
+      case "categories":
         attachCategoryFormListeners(navigate, showToast);
         break;
-      case 'brands':
+      case "brands":
         attachBrandFormListeners(navigate, showToast);
         break;
-      case 'products':
+      case "products":
         attachProductFormListeners(navigate, showToast);
         break;
     }
   } else {
     // List page listeners
     switch (currentPage) {
-      case 'dashboard':
+      case "dashboard":
         attachDashboardListeners(navigate);
         break;
-      case 'categories':
+      case "categories":
         attachCategoriesListeners(navigate, showToast);
         break;
-      case 'brands':
+      case "brands":
         attachBrandsListeners(navigate, showToast);
         break;
-      case 'products':
+      case "products":
         attachProductsListeners(navigate, showToast, render);
         break;
-      case 'export':
+      case "history":
+        attachHistoryListeners(render);
+        break;
+      case "export":
         attachExportListeners(showToast);
         break;
     }
@@ -236,17 +251,17 @@ export function initAdminApp(): void {
       render();
     }
   });
-  
+
   // Subscribe to admin data changes
   subscribeAdmin(() => {
     if (isAuthenticated()) {
       render();
     }
   });
-  
+
   // Initialize auth listener
   initAuthListener();
-  
+
   // Initial render
   render();
 }

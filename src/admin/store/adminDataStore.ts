@@ -1,4 +1,4 @@
-import type { Category, Brand, Product, PriceChange } from "@/types";
+import type { Category, Brand, Product } from "@/types";
 import {
   getCategories,
   getBrands,
@@ -12,6 +12,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct as deleteFirestoreProduct,
+  logPriceChange,
 } from "@/services";
 import { getCurrentUser } from "./authStore";
 
@@ -20,7 +21,6 @@ interface AdminDataState {
   categories: Category[];
   brands: Brand[];
   products: Product[];
-  priceHistory: PriceChange[];
   isLoading: boolean;
   error: string | null;
 }
@@ -29,7 +29,6 @@ let state: AdminDataState = {
   categories: [],
   brands: [],
   products: [],
-  priceHistory: [],
   isLoading: true,
   error: null,
 };
@@ -131,16 +130,12 @@ export async function saveBrand(
   id?: string,
 ): Promise<boolean> {
   try {
-    console.log("save brand function ==> ", data);
-
     const userId = getCurrentUser()?.uid;
 
     if (id) {
       await updateBrand(id, data, userId);
     } else {
-      console.log("create new one ==> ", data);
-      const brand = await createBrand(data, userId);
-      console.log("new brand ==> ", brand);
+      await createBrand(data, userId);
     }
 
     await loadAdminData();
@@ -174,26 +169,30 @@ export async function saveProduct(
   id?: string,
 ): Promise<boolean> {
   try {
-    const userId = getCurrentUser()?.uid;
+    const userId = getCurrentUser()?.uid || "unknown";
 
-    // Track price changes
+    // Track price changes in Firestore when editing existing product
     if (id) {
       const existingProduct = state.products.find((p) => p.id === id);
       if (existingProduct) {
         const oldPrices = JSON.stringify(existingProduct.prices);
         const newPrices = JSON.stringify(data.prices);
 
+        // Log price change to Firestore if prices are different
         if (oldPrices !== newPrices) {
-          const priceChange: PriceChange = {
-            id: `ph-${Date.now()}`,
-            productId: id,
-            previousPrices: existingProduct.prices,
-            newPrices: data.prices,
-            changedAt: new Date(),
-            changedBy: userId || "unknown",
-          };
+          try {
+            await logPriceChange({
+              productId: id,
+              productName: existingProduct.name,
+              previousPrices: existingProduct.prices,
+              newPrices: data.prices,
 
-          state.priceHistory = [priceChange, ...state.priceHistory];
+              changedBy: userId,
+            });
+          } catch (logError) {
+            // Log error but don't fail the product update
+            console.error("Error logging price change:", logError);
+          }
         }
       }
 
@@ -259,8 +258,4 @@ export function getProductCountByBrand(brandId: string): number {
 
 export function getAvailableProductsCount(): number {
   return state.products.filter((p) => p.isAvailable).length;
-}
-
-export function getPriceHistory(): PriceChange[] {
-  return state.priceHistory;
 }

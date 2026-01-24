@@ -3,14 +3,46 @@
  * Generates a PDF catalog from the admin panel
  */
 
-import { createAdminLayout, createCard } from '../components/AdminLayout';
-import { createIcon } from '../components/icons';
-import { adminDataStore, adminDataActions } from '../store/adminDataStore';
-import { formatCurrency } from '@/utils/priceUtils';
-import type { Category, Brand, Product, ProductPrice } from '@/types';
+import { adminIcon } from "../components/icons";
+import { renderAdminHeader } from "../components/AdminLayout";
+import { getAdminState } from "../store/adminDataStore";
+import { formatCurrency } from "@/utils";
+import type { Category, Brand, Product, Price } from "@/types";
 
 // PDF Generation using jsPDF (loaded from CDN)
-declare const jspdf: any;
+declare const jspdf: {
+  jsPDF: new () => JsPDFInstance;
+};
+
+interface JsPDFInstance {
+  internal: {
+    pageSize: { getWidth(): number; getHeight(): number };
+    getNumberOfPages(): number;
+  };
+  setFillColor(...args: number[]): void;
+  setTextColor(...args: number[]): void;
+  setFontSize(size: number): void;
+  setFont(font: string, style: string): void;
+  rect(x: number, y: number, w: number, h: number, style: string): void;
+  roundedRect(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rx: number,
+    ry: number,
+    style: string,
+  ): void;
+  text(
+    text: string,
+    x: number,
+    y: number,
+    options?: { align?: string; maxWidth?: number },
+  ): void;
+  addPage(): void;
+  setPage(page: number): void;
+  save(filename: string): void;
+}
 
 interface CatalogData {
   categories: Category[];
@@ -20,52 +52,97 @@ interface CatalogData {
   storeName: string;
 }
 
-function formatPriceForPDF(price: ProductPrice): string {
-  if (price.type === 'unit') {
-    return `${formatCurrency(price.price)} / ${price.unitLabel}`;
-  } else if (price.type === 'weight') {
-    return `${formatCurrency(price.pricePerKg)} / kg`;
-  } else if (price.type === 'fraction') {
-    return `Entera: ${formatCurrency(price.prices.whole)} | 1/2: ${formatCurrency(price.prices.half)} | 1/4: ${formatCurrency(price.prices.quarter)}`;
-  }
-  return '-';
+interface ExportStats {
+  totalCategories: number;
+  totalBrands: number;
+  totalProducts: number;
+  availableProducts: number;
+  unavailableProducts: number;
 }
 
-async function generatePDF(options: { includeUnavailable: boolean; groupBy: 'category' | 'brand' }): Promise<void> {
-  // Load jsPDF from CDN if not already loaded
-  if (typeof jspdf === 'undefined') {
-    await loadJsPDF();
+function getExportStats(): ExportStats {
+  const { categories, brands, products } = getAdminState();
+  const availableProducts = products.filter((p) => p.isAvailable).length;
+
+  return {
+    totalCategories: categories.filter((c) => c.isActive).length,
+    totalBrands: brands.filter((b) => b.isActive).length,
+    totalProducts: products.length,
+    availableProducts,
+    unavailableProducts: products.length - availableProducts,
+  };
+}
+
+function formatPriceForPDF(price: Price): string {
+  if (price.type === "unit") {
+    return `${formatCurrency(price.price)} / ${price.unitLabel}`;
+  } else if (price.type === "weight") {
+    return `${formatCurrency(price.pricePerKg)} / kg`;
+  } else if (price.type === "fraction") {
+    const parts: string[] = [];
+    parts.push(`Entera: ${formatCurrency(price.prices.whole)}`);
+    if (price.prices.half)
+      parts.push(`1/2: ${formatCurrency(price.prices.half)}`);
+    if (price.prices.quarter)
+      parts.push(`1/4: ${formatCurrency(price.prices.quarter)}`);
+    return parts.join(" | ");
   }
+  return "-";
+}
+
+function loadJsPDF(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof jspdf !== "undefined") {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load jsPDF"));
+    document.head.appendChild(script);
+  });
+}
+
+async function generatePDF(options: {
+  includeUnavailable: boolean;
+  groupBy: "category" | "brand";
+}): Promise<void> {
+  // Load jsPDF from CDN if not already loaded
+  await loadJsPDF();
 
   const { jsPDF } = jspdf;
   const doc = new jsPDF();
-  
+
+  const { categories, brands, products } = getAdminState();
+
   const data: CatalogData = {
-    categories: adminDataActions.getCategories().filter(c => c.isActive),
-    brands: adminDataActions.getBrands().filter(b => b.isActive),
-    products: options.includeUnavailable 
-      ? adminDataActions.getProducts() 
-      : adminDataActions.getProducts().filter(p => p.isAvailable),
+    categories: categories.filter((c) => c.isActive),
+    brands: brands.filter((b) => b.isActive),
+    products: options.includeUnavailable
+      ? products
+      : products.filter((p) => p.isAvailable),
     generatedAt: new Date(),
-    storeName: 'La Casera',
+    storeName: "La Casera",
   };
 
   // Colors
   const colors = {
-    primary: [238, 117, 18] as [number, number, number],    // brand-500
-    dark: [89, 79, 69] as [number, number, number],         // warm-900
-    medium: [132, 116, 98] as [number, number, number],     // warm-700
-    light: [213, 204, 190] as [number, number, number],     // warm-300
-    bg: [250, 249, 247] as [number, number, number],        // warm-50
+    primary: [238, 117, 18] as [number, number, number],
+    dark: [89, 79, 69] as [number, number, number],
+    medium: [132, 116, 98] as [number, number, number],
+    light: [213, 204, 190] as [number, number, number],
+    bg: [250, 249, 247] as [number, number, number],
   };
 
   let yPos = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
-  const contentWidth = pageWidth - (margin * 2);
+  const contentWidth = pageWidth - margin * 2;
 
-  // Helper function to add new page if needed
   function checkNewPage(requiredSpace: number): void {
     if (yPos + requiredSpace > pageHeight - 20) {
       doc.addPage();
@@ -74,128 +151,132 @@ async function generatePDF(options: { includeUnavailable: boolean; groupBy: 'cat
     }
   }
 
-  // Add header to each page
   function addHeader(): void {
     doc.setFillColor(...colors.primary);
-    doc.rect(0, 0, pageWidth, 12, 'F');
+    doc.rect(0, 0, pageWidth, 12, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
-    doc.text(data.storeName + ' - Catálogo de Precios', margin, 8);
+    doc.text(data.storeName + " - Catálogo de Precios", margin, 8);
     doc.text(
-      `Actualizado: ${data.generatedAt.toLocaleDateString('es-AR')}`,
+      `Actualizado: ${data.generatedAt.toLocaleDateString("es-AR")}`,
       pageWidth - margin,
       8,
-      { align: 'right' }
+      { align: "right" },
     );
     yPos = 20;
   }
 
-  // Add footer to each page
   function addFooter(): void {
     const pageCount = doc.internal.getNumberOfPages();
     doc.setFontSize(8);
     doc.setTextColor(...colors.medium);
-    
+
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 10, {
+        align: "center",
+      });
       doc.text(
-        `Página ${i} de ${pageCount}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: 'center' }
-      );
-      doc.text(
-        'Precios sujetos a cambios sin previo aviso',
+        "Precios sujetos a cambios sin previo aviso",
         pageWidth - margin,
         pageHeight - 10,
-        { align: 'right' }
+        { align: "right" },
       );
     }
   }
 
   // Title page
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 60, 'F');
-  
+  doc.rect(0, 0, pageWidth, 60, "F");
+
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(32);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.storeName, pageWidth / 2, 35, { align: 'center' });
-  
+  doc.setFont("helvetica", "bold");
+  doc.text(data.storeName, pageWidth / 2, 35, { align: "center" });
+
   doc.setFontSize(16);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Catálogo de Precios', pageWidth / 2, 48, { align: 'center' });
+  doc.setFont("helvetica", "normal");
+  doc.text("Catálogo de Precios", pageWidth / 2, 48, { align: "center" });
 
   yPos = 80;
-  
+
   // Summary box
   doc.setFillColor(...colors.bg);
-  doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, 'F');
-  
+  doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, "F");
+
   doc.setTextColor(...colors.dark);
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Resumen del Catálogo', margin + 10, yPos + 12);
-  
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "bold");
+  doc.text("Resumen del Catálogo", margin + 10, yPos + 12);
+
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...colors.medium);
   doc.text(`• ${data.categories.length} categorías`, margin + 10, yPos + 22);
   doc.text(`• ${data.brands.length} marcas`, margin + 70, yPos + 22);
   doc.text(`• ${data.products.length} productos`, margin + 120, yPos + 22);
   doc.text(
-    `Generado: ${data.generatedAt.toLocaleDateString('es-AR', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    `Generado: ${data.generatedAt.toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     })}`,
     margin + 10,
-    yPos + 30
+    yPos + 30,
   );
 
   // Start catalog content on new page
   doc.addPage();
   addHeader();
 
-  if (options.groupBy === 'category') {
+  if (options.groupBy === "category") {
     // Group by category
     for (const category of data.categories) {
-      const categoryProducts = data.products.filter(p => p.categoryId === category.id);
+      const categoryProducts = data.products.filter(
+        (p) => p.categoryId === category.id,
+      );
       if (categoryProducts.length === 0) continue;
 
       checkNewPage(25);
 
       // Category header
       doc.setFillColor(...colors.primary);
-      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, 'F');
+      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.text(category.name.toUpperCase(), margin + 5, yPos + 7);
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${categoryProducts.length} productos`, pageWidth - margin - 5, yPos + 7, { align: 'right' });
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `${categoryProducts.length} productos`,
+        pageWidth - margin - 5,
+        yPos + 7,
+        { align: "right" },
+      );
       yPos += 15;
 
       // Group products by brand within category
-      const brandIds = [...new Set(categoryProducts.map(p => p.brandId))];
-      
+      const brandIds = [...new Set(categoryProducts.map((p) => p.brandId))];
+
       for (const brandId of brandIds) {
-        const brand = data.brands.find(b => b.id === brandId);
-        const brandProducts = categoryProducts.filter(p => p.brandId === brandId);
-        
+        const brand = data.brands.find((b) => b.id === brandId);
+        const brandProducts = categoryProducts.filter(
+          (p) => p.brandId === brandId,
+        );
+
         if (!brand || brandProducts.length === 0) continue;
 
         checkNewPage(20);
 
         // Brand subheader
         doc.setFillColor(...colors.bg);
-        doc.rect(margin, yPos, contentWidth, 8, 'F');
+        doc.rect(margin, yPos, contentWidth, 8, "F");
         doc.setTextColor(...colors.primary);
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont("helvetica", "bold");
         doc.text(brand.name, margin + 3, yPos + 5.5);
         yPos += 12;
 
@@ -203,32 +284,33 @@ async function generatePDF(options: { includeUnavailable: boolean; groupBy: 'cat
         for (const product of brandProducts) {
           checkNewPage(12);
 
-          // Alternate row colors
           const rowIndex = brandProducts.indexOf(product);
           if (rowIndex % 2 === 0) {
             doc.setFillColor(255, 255, 255);
           } else {
             doc.setFillColor(...colors.bg);
           }
-          doc.rect(margin, yPos - 1, contentWidth, 10, 'F');
+          doc.rect(margin, yPos - 1, contentWidth, 10, "F");
 
-          // Product name
           doc.setTextColor(...colors.dark);
           doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          
+          doc.setFont("helvetica", "normal");
+
           let productName = product.name;
           if (!product.isAvailable) {
-            productName += ' (Sin stock)';
+            productName += " (Sin stock)";
             doc.setTextColor(...colors.medium);
           }
           doc.text(productName, margin + 3, yPos + 5, { maxWidth: 80 });
 
-          // Price
           doc.setTextColor(...colors.primary);
-          doc.setFont('helvetica', 'bold');
-          const priceText = formatPriceForPDF(product.prices[0]);
-          doc.text(priceText, pageWidth - margin - 3, yPos + 5, { align: 'right' });
+          doc.setFont("helvetica", "bold");
+          const priceText = product.prices[0]
+            ? formatPriceForPDF(product.prices[0])
+            : "-";
+          doc.text(priceText, pageWidth - margin - 3, yPos + 5, {
+            align: "right",
+          });
 
           yPos += 10;
         }
@@ -236,65 +318,73 @@ async function generatePDF(options: { includeUnavailable: boolean; groupBy: 'cat
         yPos += 5;
       }
 
-      yPos += 5;
+      yPos += 10;
     }
   } else {
     // Group by brand
     for (const brand of data.brands) {
-      const brandProducts = data.products.filter(p => p.brandId === brand.id);
+      const brandProducts = data.products.filter((p) => p.brandId === brand.id);
       if (brandProducts.length === 0) continue;
 
       checkNewPage(25);
 
       // Brand header
       doc.setFillColor(...colors.primary);
-      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, 'F');
+      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.text(brand.name.toUpperCase(), margin + 5, yPos + 7);
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${brandProducts.length} productos`, pageWidth - margin - 5, yPos + 7, { align: 'right' });
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `${brandProducts.length} productos`,
+        pageWidth - margin - 5,
+        yPos + 7,
+        { align: "right" },
+      );
       yPos += 15;
 
       // Products table
       for (const product of brandProducts) {
         checkNewPage(12);
 
-        const category = data.categories.find(c => c.id === product.categoryId);
+        const category = data.categories.find(
+          (c) => c.id === product.categoryId,
+        );
         const rowIndex = brandProducts.indexOf(product);
-        
+
         if (rowIndex % 2 === 0) {
           doc.setFillColor(255, 255, 255);
         } else {
           doc.setFillColor(...colors.bg);
         }
-        doc.rect(margin, yPos - 1, contentWidth, 10, 'F');
+        doc.rect(margin, yPos - 1, contentWidth, 10, "F");
 
-        // Product name with category
         doc.setTextColor(...colors.dark);
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        
+        doc.setFont("helvetica", "normal");
+
         let productName = product.name;
         if (!product.isAvailable) {
-          productName += ' (Sin stock)';
+          productName += " (Sin stock)";
           doc.setTextColor(...colors.medium);
         }
         doc.text(productName, margin + 3, yPos + 5, { maxWidth: 70 });
 
-        // Category badge
         doc.setTextColor(...colors.medium);
         doc.setFontSize(7);
-        doc.text(category?.name || '', margin + 75, yPos + 5);
+        doc.text(category?.name || "", margin + 75, yPos + 5);
 
-        // Price
         doc.setTextColor(...colors.primary);
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        const priceText = formatPriceForPDF(product.prices[0]);
-        doc.text(priceText, pageWidth - margin - 3, yPos + 5, { align: 'right' });
+        doc.setFont("helvetica", "bold");
+        const priceText = product.prices[0]
+          ? formatPriceForPDF(product.prices[0])
+          : "-";
+        doc.text(priceText, pageWidth - margin - 3, yPos + 5, {
+          align: "right",
+        });
 
         yPos += 10;
       }
@@ -307,179 +397,180 @@ async function generatePDF(options: { includeUnavailable: boolean; groupBy: 'cat
   addFooter();
 
   // Save PDF
-  const fileName = `catalogo-${data.storeName.toLowerCase().replace(/\s+/g, '-')}-${
-    data.generatedAt.toISOString().split('T')[0]
+  const fileName = `catalogo-${data.storeName.toLowerCase().replace(/\s+/g, "-")}-${
+    data.generatedAt.toISOString().split("T")[0]
   }.pdf`;
   doc.save(fileName);
 }
 
-function loadJsPDF(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof jspdf !== 'undefined') {
-      resolve();
-      return;
-    }
+// Render the Export PDF page
+export function renderExportPage(
+  _showToast: (message: string, type?: "success" | "error") => void,
+): string {
+  const stats = getExportStats();
 
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load jsPDF'));
-    document.head.appendChild(script);
-  });
+  return `
+    ${renderAdminHeader("Exportar PDF")}
+    <main class="p-4 lg:p-6">
+      <div class="bg-white rounded-xl border border-warm-200 max-w-2xl">
+        <div class="px-6 py-4 border-b border-warm-100">
+          <h3 class="font-display text-lg font-semibold text-warm-800">Exportar Catálogo a PDF</h3>
+          <p class="text-sm text-warm-500 mt-1">Genera un PDF profesional del catálogo para imprimir o compartir</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Preview stats -->
+          <div class="bg-warm-50 rounded-lg p-4">
+            <h4 class="font-medium text-warm-700 mb-3">El PDF incluirá:</h4>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p class="text-2xl font-bold text-brand-600">${stats.totalCategories}</p>
+                <p class="text-xs text-warm-500">Categorías</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-brand-600">${stats.totalBrands}</p>
+                <p class="text-xs text-warm-500">Marcas</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-brand-600">${stats.totalProducts}</p>
+                <p class="text-xs text-warm-500">Productos</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="space-y-4">
+            <h4 class="font-medium text-warm-700">Opciones de exportación</h4>
+            
+            <div class="space-y-3">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  id="includeUnavailable" 
+                  class="w-5 h-5 rounded border-warm-300 text-brand-500 focus:ring-brand-400"
+                />
+                <div>
+                  <span class="text-sm font-medium text-warm-700">Incluir productos sin stock</span>
+                  <p class="text-xs text-warm-500">${stats.unavailableProducts} productos marcados como sin stock</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-warm-700">Agrupar por:</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="groupBy" 
+                    value="category" 
+                    checked
+                    class="text-brand-500 focus:ring-brand-400"
+                  />
+                  <span class="text-sm text-warm-700">Categoría</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="groupBy" 
+                    value="brand"
+                    class="text-brand-500 focus:ring-brand-400"
+                  />
+                  <span class="text-sm text-warm-700">Marca</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generate button -->
+          <div class="pt-4 border-t border-warm-100">
+            <button
+              id="generate-pdf-btn"
+              class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors"
+            >
+              ${adminIcon("download", "w-5 h-5")}
+              <span id="btn-text">Generar y Descargar PDF</span>
+              <span id="btn-loader" class="hidden">
+                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info card -->
+      <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-2xl">
+        <div class="flex gap-3">
+          ${adminIcon("alertCircle", "w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5")}
+          <div>
+            <p class="font-medium text-blue-800">Sobre el PDF generado</p>
+            <ul class="text-sm text-blue-700 mt-1 space-y-1">
+              <li>• Formato A4 optimizado para impresión</li>
+              <li>• Incluye portada con resumen</li>
+              <li>• Fecha de generación en cada página</li>
+              <li>• Precios formateados en pesos argentinos</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  `;
 }
 
-export function createExportPDFPage(): HTMLElement {
-  const content = document.createElement('div');
-  content.className = 'space-y-6 max-w-2xl';
+// Attach event listeners for the Export PDF page
+export function attachExportListeners(
+  showToast: (message: string, type?: "success" | "error") => void,
+): void {
+  const generateBtn = document.getElementById(
+    "generate-pdf-btn",
+  ) as HTMLButtonElement;
+  const btnText = document.getElementById("btn-text");
+  const btnLoader = document.getElementById("btn-loader");
+  const includeUnavailableCheckbox = document.getElementById(
+    "includeUnavailable",
+  ) as HTMLInputElement;
+  const groupByRadios = document.querySelectorAll(
+    'input[name="groupBy"]',
+  ) as NodeListOf<HTMLInputElement>;
 
-  const stats = adminDataActions.getStats();
+  generateBtn?.addEventListener("click", async () => {
+    if (!generateBtn || !btnText || !btnLoader) return;
 
-  content.innerHTML = `
-    <div class="bg-white rounded-xl border border-warm-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-warm-100">
-        <h3 class="font-display text-lg font-semibold text-warm-800">Exportar Catálogo a PDF</h3>
-        <p class="text-sm text-warm-500 mt-1">Genera un PDF profesional del catálogo para imprimir o compartir</p>
-      </div>
+    // Show loading state
+    generateBtn.disabled = true;
+    btnText.textContent = "Generando...";
+    btnLoader.classList.remove("hidden");
 
-      <div class="p-6 space-y-6">
-        <!-- Preview stats -->
-        <div class="bg-warm-50 rounded-lg p-4">
-          <h4 class="font-medium text-warm-700 mb-3">El PDF incluirá:</h4>
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p class="text-2xl font-bold text-brand-600">${stats.totalCategories}</p>
-              <p class="text-xs text-warm-500">Categorías</p>
-            </div>
-            <div>
-              <p class="text-2xl font-bold text-brand-600">${stats.totalBrands}</p>
-              <p class="text-xs text-warm-500">Marcas</p>
-            </div>
-            <div>
-              <p class="text-2xl font-bold text-brand-600">${stats.totalProducts}</p>
-              <p class="text-xs text-warm-500">Productos</p>
-            </div>
-          </div>
-        </div>
+    try {
+      const options = {
+        includeUnavailable: includeUnavailableCheckbox?.checked || false,
+        groupBy: (Array.from(groupByRadios).find((r) => r.checked)?.value ||
+          "category") as "category" | "brand",
+      };
 
-        <!-- Options -->
-        <div class="space-y-4">
-          <h4 class="font-medium text-warm-700">Opciones de exportación</h4>
-          
-          <div class="space-y-3">
-            <label class="flex items-center gap-3 cursor-pointer">
-              <input 
-                type="checkbox" 
-                id="includeUnavailable" 
-                class="w-5 h-5 rounded border-warm-300 text-brand-500 focus:ring-brand-400"
-              />
-              <div>
-                <span class="text-sm font-medium text-warm-700">Incluir productos sin stock</span>
-                <p class="text-xs text-warm-500">${stats.unavailableProducts} productos marcados como sin stock</p>
-              </div>
-            </label>
-          </div>
+      await generatePDF(options);
 
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-warm-700">Agrupar por:</label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="groupBy" 
-                  value="category" 
-                  checked
-                  class="text-brand-500 focus:ring-brand-400"
-                />
-                <span class="text-sm text-warm-700">Categoría</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="groupBy" 
-                  value="brand"
-                  class="text-brand-500 focus:ring-brand-400"
-                />
-                <span class="text-sm text-warm-700">Marca</span>
-              </label>
-            </div>
-          </div>
-        </div>
+      // Success feedback
+      btnText.textContent = "¡PDF Descargado!";
+      showToast("PDF generado exitosamente");
 
-        <!-- Generate button -->
-        <div class="pt-4 border-t border-warm-100">
-          <button
-            id="generate-pdf-btn"
-            class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors"
-          >
-            ${createIcon('download', { size: 20 })}
-            <span id="btn-text">Generar y Descargar PDF</span>
-            <span id="btn-loader" class="hidden">
-              <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      setTimeout(() => {
+        btnText.textContent = "Generar y Descargar PDF";
+      }, 2000);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      btnText.textContent = "Error al generar";
+      showToast("Error al generar PDF", "error");
 
-    <!-- Info card -->
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-      <div class="flex gap-3">
-        ${createIcon('alertCircle', { size: 20, className: 'text-blue-500 flex-shrink-0 mt-0.5' })}
-        <div>
-          <p class="font-medium text-blue-800">Sobre el PDF generado</p>
-          <ul class="text-sm text-blue-700 mt-1 space-y-1">
-            <li>• Formato A4 optimizado para impresión</li>
-            <li>• Incluye portada con resumen</li>
-            <li>• Fecha de generación en cada página</li>
-            <li>• Precios formateados en pesos argentinos</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Setup event handlers
-  setTimeout(() => {
-    const generateBtn = content.querySelector('#generate-pdf-btn') as HTMLButtonElement;
-    const btnText = content.querySelector('#btn-text') as HTMLElement;
-    const btnLoader = content.querySelector('#btn-loader') as HTMLElement;
-    const includeUnavailableCheckbox = content.querySelector('#includeUnavailable') as HTMLInputElement;
-    const groupByRadios = content.querySelectorAll('input[name="groupBy"]') as NodeListOf<HTMLInputElement>;
-
-    generateBtn?.addEventListener('click', async () => {
-      // Show loading state
-      generateBtn.disabled = true;
-      btnText.textContent = 'Generando...';
-      btnLoader.classList.remove('hidden');
-
-      try {
-        const options = {
-          includeUnavailable: includeUnavailableCheckbox.checked,
-          groupBy: (Array.from(groupByRadios).find(r => r.checked)?.value || 'category') as 'category' | 'brand',
-        };
-
-        await generatePDF(options);
-
-        // Success feedback
-        btnText.textContent = '¡PDF Descargado!';
-        setTimeout(() => {
-          btnText.textContent = 'Generar y Descargar PDF';
-        }, 2000);
-      } catch (error) {
-        console.error('Error generating PDF:', error);
-        btnText.textContent = 'Error al generar';
-        setTimeout(() => {
-          btnText.textContent = 'Generar y Descargar PDF';
-        }, 2000);
-      } finally {
-        generateBtn.disabled = false;
-        btnLoader.classList.add('hidden');
-      }
-    });
-  }, 0);
-
-  return createAdminLayout(content, 'Exportar PDF');
+      setTimeout(() => {
+        btnText.textContent = "Generar y Descargar PDF";
+      }, 2000);
+    } finally {
+      generateBtn.disabled = false;
+      btnLoader.classList.add("hidden");
+    }
+  });
 }

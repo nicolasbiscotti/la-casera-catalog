@@ -40,3 +40,13 @@ export {
   updateProduct,
   deleteProduct,
 } from "./products";
+
+// Price History
+export {
+  getPriceHistory,
+  getProductPriceHistory,
+  logPriceChange,
+  getRecentPriceChanges,
+} from "./priceHistoryService";
+
+export type { PriceChangeLog } from "./priceHistoryService";
