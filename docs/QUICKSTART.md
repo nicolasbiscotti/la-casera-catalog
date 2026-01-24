@@ -1,134 +1,124 @@
-# 🚀 Quick Start - Local Development
-
-This guide gets you running locally in 5 minutes.
+# Quick Start Guide
 
 ## Prerequisites
 
-```bash
-node --version  # v22.x required
-pnpm --version  # v10.x required
-firebase --version  # v15.x required
-```
+Make sure you have the following installed:
+- Node.js v22.x
+- pnpm v10.x
+- firebase-tools v15.x
 
-## Setup Steps
+## Setup
 
-### 1. Clone & Install
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/nicolasbiscotti/la-casera-catalog.git
+   cd la-casera-catalog
+   ```
 
-```bash
-git clone https://github.com/nicolasbiscotti/la-casera-catalog.git
-cd la-casera-catalog
-pnpm install
-```
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
 
-### 2. Configure Environment
+3. **Configure environment**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   For local development with emulators, the default values work out of the box.
 
-```bash
-cp .env.example .env.local
-```
+## Development
 
-Edit `.env.local` - for local development with emulators, you only need to set:
+### Option 1: Full Local Development (Recommended)
 
-```env
-VITE_ENVIRONMENT=development
-VITE_USE_FIREBASE_EMULATORS=true
-VITE_STORE_NAME=La Casera (Local)
-VITE_STORE_WHATSAPP=5491112345678
-```
-
-The Firebase config values can remain as defaults since emulators don't validate them.
-
-### 3. Start Development
-
-**Option A: All-in-one (recommended)**
+Start both Firebase emulators and the dev server:
 
 ```bash
 pnpm dev:emulators
 ```
 
-This starts both Firebase emulators and Vite dev server.
+This will:
+- Start Firebase Auth emulator on port 9099
+- Start Firestore emulator on port 8080
+- Start Emulator UI on port 4000
+- Start Vite dev server on port 3000
 
-**Option B: Separate terminals**
+### Option 2: Separate Terminals
 
+Terminal 1 - Start emulators:
 ```bash
-# Terminal 1 - Start emulators
 pnpm firebase:emulators
+```
 
-# Terminal 2 - Start dev server
+Terminal 2 - Start dev server:
+```bash
 pnpm dev
 ```
 
-### 4. Access the App
+### Seed Test Data
 
-- **App**: http://localhost:3000
-- **Admin Panel**: http://localhost:3000/#/admin
-- **Emulator UI**: http://localhost:4000
-
-### 5. Seed Sample Data (Optional)
-
-With emulators running, in a new terminal:
+With emulators running:
 
 ```bash
 pnpm seed:local
 ```
 
-This creates:
-- 4 categories
-- 7 brands  
-- 20 products
-- 2 admin users
+This creates sample categories, brands, and products.
 
-**Default Admin Credentials:**
-- Email: `admin@lacasera.com`
-- Password: `admin123`
+## URLs
 
-## Available Scripts
+| Service | URL |
+|---------|-----|
+| Application | http://localhost:3000 |
+| Admin Panel | http://localhost:3000/#/admin |
+| Emulator UI | http://localhost:4000 |
+| Firestore Emulator | localhost:8080 |
+| Auth Emulator | localhost:9099 |
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start Vite dev server |
-| `pnpm dev:emulators` | Start emulators + dev server |
-| `pnpm build` | Build for production |
-| `pnpm preview` | Preview production build |
-| `pnpm lint` | Run ESLint |
-| `pnpm type-check` | Run TypeScript check |
-| `pnpm test` | Run tests in watch mode |
-| `pnpm test:run` | Run tests once |
-| `pnpm firebase:emulators` | Start Firebase emulators |
-| `pnpm seed:local` | Seed emulator with sample data |
+## Demo Credentials
 
-## Troubleshooting
+For admin panel (coming soon):
+- **Admin**: admin@lacasera.com / admin123
+- **Editor**: editor@lacasera.com / editor123
 
-### Emulators won't start
+## Project Structure
 
-```bash
-# Check if ports are in use
-lsof -i :8080   # Firestore
-lsof -i :9099   # Auth
-lsof -i :4000   # UI
-
-# Kill if needed
-kill -9 <PID>
+```
+la-casera-catalog/
+├── src/
+│   ├── components/     # UI components
+│   ├── services/       # Firebase services
+│   ├── store/          # State management
+│   ├── types/          # TypeScript types
+│   ├── utils/          # Utility functions
+│   ├── router/         # SPA routing
+│   ├── styles/         # CSS styles
+│   ├── admin/          # Admin panel (coming soon)
+│   ├── CatalogApp.ts   # Main catalog app
+│   └── main.ts         # Entry point
+├── scripts/            # Development scripts
+├── docs/               # Documentation
+└── public/             # Static assets
 ```
 
-### Build errors
+## Common Issues
 
+### Emulators not starting
+Make sure no other processes are using ports 8080, 9099, or 4000.
+
+### TypeScript errors
+Run type check:
 ```bash
-# Clear cache and rebuild
-pnpm clean
-pnpm install
-pnpm build
+pnpm type-check
 ```
 
-### Data not persisting
-
-Make sure you're using the import/export flags:
-
-```bash
-pnpm firebase:emulators  # Auto imports/exports firebase-data/
-```
+### Data not loading
+1. Check emulators are running
+2. Verify `.env.local` has `VITE_USE_EMULATORS=true`
+3. Run seed script if database is empty
 
 ## Next Steps
 
-- Read the full [Deployment Guide](./docs/DEPLOYMENT.md) for production setup
-- Configure Firebase project for staging/production
-- Set up Vercel deployment
+- Explore the catalog at http://localhost:3000
+- View Firestore data at http://localhost:4000/firestore
+- Check [DEPLOYMENT.md](./DEPLOYMENT.md) for production setup
