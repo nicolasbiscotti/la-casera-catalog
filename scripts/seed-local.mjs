@@ -3,6 +3,7 @@
  *
  * Uses firebase-admin to bypass security rules for initial seeding.
  * Sets Custom Claims for admin users.
+ * Uses Firestore-generated IDs and populates audit fields.
  *
  * Usage: pnpm seed:local
  *
@@ -18,17 +19,16 @@ import { getAuth } from "firebase-admin/auth";
 // 1. Set environment variables to force Admin SDK to use Emulators (see package.json -> "seed:local")
 
 // 2. Initialize Admin App (Privileged Access)
-const app = initializeApp({
-  projectId: "tiger-catalog",
+initializeApp({
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
 });
 
 const db = getFirestore();
 const auth = getAuth();
 
-// --- Data Definitions ---
-const categories = [
+// --- Data Definitions (without hardcoded IDs) ---
+const categoriesData = [
   {
-    id: "cat-1",
     name: "Fiambres",
     slug: "fiambres",
     iconName: "meat",
@@ -36,7 +36,6 @@ const categories = [
     sortOrder: 1,
   },
   {
-    id: "cat-2",
     name: "Quesos",
     slug: "quesos",
     iconName: "cheese",
@@ -44,7 +43,6 @@ const categories = [
     sortOrder: 2,
   },
   {
-    id: "cat-3",
     name: "Lácteos",
     slug: "lacteos",
     iconName: "milk",
@@ -52,7 +50,6 @@ const categories = [
     sortOrder: 3,
   },
   {
-    id: "cat-4",
     name: "Almacén",
     slug: "almacen",
     iconName: "store",
@@ -61,23 +58,24 @@ const categories = [
   },
 ];
 
-const brands = [
-  { id: "brand-1", name: "Paladini", isActive: true, sortOrder: 1 },
-  { id: "brand-2", name: "Cagnoli", isActive: true, sortOrder: 2 },
-  { id: "brand-3", name: "Santa Rosa", isActive: true, sortOrder: 3 },
-  { id: "brand-4", name: "Verónica", isActive: true, sortOrder: 4 },
-  { id: "brand-5", name: "La Serenísima", isActive: true, sortOrder: 5 },
-  { id: "brand-6", name: "Sancor", isActive: true, sortOrder: 6 },
-  { id: "brand-7", name: "La Campagnola", isActive: true, sortOrder: 7 },
+const brandsData = [
+  { name: "Paladini", isActive: true, sortOrder: 1 },
+  { name: "Cagnoli", isActive: true, sortOrder: 2 },
+  { name: "Santa Rosa", isActive: true, sortOrder: 3 },
+  { name: "Verónica", isActive: true, sortOrder: 4 },
+  { name: "La Serenísima", isActive: true, sortOrder: 5 },
+  { name: "Sancor", isActive: true, sortOrder: 6 },
+  { name: "La Campagnola", isActive: true, sortOrder: 7 },
 ];
 
-const products = [
+// Products will reference categories and brands by name initially
+// We'll map them to IDs after creating categories and brands
+const productsData = [
   // Fiambres - Paladini
   {
-    id: "prod-1",
     name: "Jamón Cocido Natural",
-    brandId: "brand-1",
-    categoryId: "cat-1",
+    brandName: "Paladini",
+    categoryName: "Fiambres",
     prices: [
       {
         type: "weight",
@@ -89,30 +87,27 @@ const products = [
     tags: ["premium"],
   },
   {
-    id: "prod-2",
     name: "Salame Milán",
-    brandId: "brand-1",
-    categoryId: "cat-1",
+    brandName: "Paladini",
+    categoryName: "Fiambres",
     prices: [
       { type: "weight", pricePerKg: 12000, availableWeights: [100, 250, 500] },
     ],
     isAvailable: true,
   },
   {
-    id: "prod-3",
     name: "Mortadela con Aceitunas",
-    brandId: "brand-1",
-    categoryId: "cat-1",
+    brandName: "Paladini",
+    categoryName: "Fiambres",
     prices: [
       { type: "weight", pricePerKg: 6500, availableWeights: [250, 500, 1000] },
     ],
     isAvailable: true,
   },
   {
-    id: "prod-4",
     name: "Panceta Ahumada",
-    brandId: "brand-1",
-    categoryId: "cat-1",
+    brandName: "Paladini",
+    categoryName: "Fiambres",
     prices: [
       { type: "weight", pricePerKg: 9800, availableWeights: [100, 250, 500] },
     ],
@@ -121,10 +116,9 @@ const products = [
   },
   // Fiambres - Cagnoli
   {
-    id: "prod-5",
     name: "Jamón Crudo",
-    brandId: "brand-2",
-    categoryId: "cat-1",
+    brandName: "Cagnoli",
+    categoryName: "Fiambres",
     prices: [
       { type: "weight", pricePerKg: 18000, availableWeights: [100, 250, 500] },
     ],
@@ -132,10 +126,9 @@ const products = [
     tags: ["premium", "importado"],
   },
   {
-    id: "prod-6",
     name: "Bondiola",
-    brandId: "brand-2",
-    categoryId: "cat-1",
+    brandName: "Cagnoli",
+    categoryName: "Fiambres",
     prices: [
       { type: "weight", pricePerKg: 11000, availableWeights: [100, 250, 500] },
     ],
@@ -143,10 +136,9 @@ const products = [
   },
   // Quesos - Santa Rosa
   {
-    id: "prod-7",
     name: "Queso Sardo",
-    brandId: "brand-3",
-    categoryId: "cat-2",
+    brandName: "Santa Rosa",
+    categoryName: "Quesos",
     prices: [
       {
         type: "fraction",
@@ -158,20 +150,18 @@ const products = [
     tags: ["premium"],
   },
   {
-    id: "prod-8",
     name: "Queso Cremoso",
-    brandId: "brand-3",
-    categoryId: "cat-2",
+    brandName: "Santa Rosa",
+    categoryName: "Quesos",
     prices: [
       { type: "weight", pricePerKg: 7500, availableWeights: [250, 500, 1000] },
     ],
     isAvailable: true,
   },
   {
-    id: "prod-9",
     name: "Provolone",
-    brandId: "brand-3",
-    categoryId: "cat-2",
+    brandName: "Santa Rosa",
+    categoryName: "Quesos",
     prices: [
       { type: "weight", pricePerKg: 9200, availableWeights: [250, 500] },
     ],
@@ -179,18 +169,16 @@ const products = [
   },
   // Quesos - Verónica
   {
-    id: "prod-10",
     name: "Queso Rallado",
-    brandId: "brand-4",
-    categoryId: "cat-2",
+    brandName: "Verónica",
+    categoryName: "Quesos",
     prices: [{ type: "unit", price: 2800, unitLabel: "paquete 250g" }],
     isAvailable: true,
   },
   {
-    id: "prod-11",
     name: "Queso Port Salut",
-    brandId: "brand-4",
-    categoryId: "cat-2",
+    brandName: "Verónica",
+    categoryName: "Quesos",
     prices: [
       {
         type: "fraction",
@@ -203,77 +191,68 @@ const products = [
   },
   // Lácteos - La Serenísima
   {
-    id: "prod-12",
     name: "Leche Entera",
-    brandId: "brand-5",
-    categoryId: "cat-3",
+    brandName: "La Serenísima",
+    categoryName: "Lácteos",
     prices: [{ type: "unit", price: 1200, unitLabel: "litro" }],
     isAvailable: true,
   },
   {
-    id: "prod-13",
     name: "Manteca",
-    brandId: "brand-5",
-    categoryId: "cat-3",
+    brandName: "La Serenísima",
+    categoryName: "Lácteos",
     prices: [{ type: "unit", price: 2500, unitLabel: "pan 200g" }],
     isAvailable: true,
   },
   {
-    id: "prod-14",
     name: "Crema de Leche",
-    brandId: "brand-5",
-    categoryId: "cat-3",
+    brandName: "La Serenísima",
+    categoryName: "Lácteos",
     prices: [{ type: "unit", price: 1800, unitLabel: "200ml" }],
     isAvailable: true,
   },
   // Lácteos - Sancor
   {
-    id: "prod-15",
     name: "Yogur Firme Vainilla",
-    brandId: "brand-6",
-    categoryId: "cat-3",
+    brandName: "Sancor",
+    categoryName: "Lácteos",
     prices: [{ type: "unit", price: 950, unitLabel: "pote 190g" }],
     isAvailable: true,
   },
   {
-    id: "prod-16",
     name: "Dulce de Leche",
-    brandId: "brand-6",
-    categoryId: "cat-3",
+    brandName: "Sancor",
+    categoryName: "Lácteos",
     prices: [{ type: "unit", price: 3200, unitLabel: "pote 400g" }],
     isAvailable: true,
     tags: ["premium"],
   },
   // Almacén - La Campagnola
   {
-    id: "prod-17",
     name: "Aceitunas Verdes",
-    brandId: "brand-7",
-    categoryId: "cat-4",
+    brandName: "La Campagnola",
+    categoryName: "Almacén",
     prices: [{ type: "unit", price: 2100, unitLabel: "frasco 220g" }],
     isAvailable: true,
   },
   {
-    id: "prod-18",
     name: "Aceitunas Negras",
-    brandId: "brand-7",
-    categoryId: "cat-4",
+    brandName: "La Campagnola",
+    categoryName: "Almacén",
     prices: [{ type: "unit", price: 2400, unitLabel: "frasco 220g" }],
     isAvailable: false,
   },
   {
-    id: "prod-19",
     name: "Tomates Peritas",
-    brandId: "brand-7",
-    categoryId: "cat-4",
+    brandName: "La Campagnola",
+    categoryName: "Almacén",
     prices: [{ type: "unit", price: 1100, unitLabel: "lata 400g" }],
     isAvailable: true,
   },
   {
-    id: "prod-20",
     name: "Arvejas",
-    brandId: "brand-7",
-    categoryId: "cat-4",
+    brandName: "La Campagnola",
+    categoryName: "Almacén",
     prices: [{ type: "unit", price: 980, unitLabel: "lata 350g" }],
     isAvailable: true,
     tags: ["oferta"],
@@ -312,6 +291,7 @@ async function seed() {
 
   try {
     const now = Timestamp.now();
+    let adminUserId = null;
 
     // First, create admin users in Auth and Firestore
     console.log("👤 Seeding admin users...");
@@ -325,6 +305,11 @@ async function seed() {
           displayName: adminData.displayName,
         });
         uid = userRecord.uid;
+
+        // Store first admin user ID for audit fields
+        if (adminData.role === "admin" && !adminUserId) {
+          adminUserId = uid;
+        }
 
         // 🔥 CRITICAL: Set the Custom Claim for admin role
         // This is what the security rules check for!
@@ -348,6 +333,11 @@ async function seed() {
           // If user exists, fetch their UID and refresh claim
           const userRecord = await auth.getUserByEmail(adminData.email);
           uid = userRecord.uid;
+
+          // Store first admin user ID for audit fields
+          if (adminData.role === "admin" && !adminUserId) {
+            adminUserId = uid;
+          }
 
           // Re-apply claim just in case
           if (adminData.role === "admin") {
@@ -377,45 +367,70 @@ async function seed() {
     }
     console.log("");
 
-    // Seed categories
+    // Seed categories with Firestore-generated IDs
     console.log("📁 Seeding categories...");
-    for (const category of categories) {
-      await db.doc(`${getCollectionPath("categories")}/${category.id}`).set({
-        ...category,
+    const categoryIdMap = new Map(); // name -> id mapping
+    for (const categoryData of categoriesData) {
+      const docRef = db.collection(getCollectionPath("categories")).doc();
+      await docRef.set({
+        ...categoryData,
         createdAt: now,
         updatedAt: now,
+        createdBy: adminUserId,
+        lastModifiedBy: adminUserId,
       });
+      categoryIdMap.set(categoryData.name, docRef.id);
+      console.log(`   ✓ ${categoryData.name} - ID: ${docRef.id}`);
     }
-    console.log(`   ✓ ${categories.length} categories created\n`);
+    console.log(`   ✓ ${categoriesData.length} categories created\n`);
 
-    // Seed brands
+    // Seed brands with Firestore-generated IDs
     console.log("🏷️  Seeding brands...");
-    for (const brand of brands) {
-      await db.doc(`${getCollectionPath("brands")}/${brand.id}`).set({
-        ...brand,
+    const brandIdMap = new Map(); // name -> id mapping
+    for (const brandData of brandsData) {
+      const docRef = db.collection(getCollectionPath("brands")).doc();
+      await docRef.set({
+        ...brandData,
         createdAt: now,
         updatedAt: now,
+        createdBy: adminUserId,
+        lastModifiedBy: adminUserId,
       });
+      brandIdMap.set(brandData.name, docRef.id);
+      console.log(`   ✓ ${brandData.name} - ID: ${docRef.id}`);
     }
-    console.log(`   ✓ ${brands.length} brands created\n`);
+    console.log(`   ✓ ${brandsData.length} brands created\n`);
 
-    // Seed products
+    // Seed products with Firestore-generated IDs
     console.log("📦 Seeding products...");
-    for (const product of products) {
-      await db.doc(`${getCollectionPath("products")}/${product.id}`).set({
-        ...product,
+    for (const productData of productsData) {
+      const { brandName, categoryName, ...productFields } = productData;
+
+      const brandId = brandIdMap.get(brandName);
+      const categoryId = categoryIdMap.get(categoryName);
+
+      if (!brandId || !categoryId) {
+        console.warn(
+          `   ⚠ Skipping ${productData.name}: missing brand or category`,
+        );
+        continue;
+      }
+
+      const docRef = db.collection(getCollectionPath("products")).doc();
+      await docRef.set({
+        ...productFields,
+        brandId,
+        categoryId,
         createdAt: now,
         updatedAt: now,
+        createdBy: adminUserId,
+        lastModifiedBy: adminUserId,
       });
+      console.log(`   ✓ ${productData.name} - ID: ${docRef.id}`);
     }
-    console.log(`   ✓ ${products.length} products created\n`);
+    console.log(`   ✓ ${productsData.length} products created\n`);
 
     console.log("✅ Seed completed successfully!\n");
-    console.log("📝 Admin credentials:");
-    console.log("   Email: admin@lacasera.com");
-    console.log("   Password: admin123\n");
-    console.log("   Email: editor@lacasera.com");
-    console.log("   Password: editor123\n");
   } catch (error) {
     console.error("❌ Seed failed:", error);
     process.exit(1);
