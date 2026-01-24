@@ -1,6 +1,5 @@
 import { icon } from "./icons";
 import {
-  getPriceDisplay,
   formatCurrency,
   formatWeight,
   isWeightPrice,
@@ -84,7 +83,7 @@ export function renderProductCard(product: Product): string {
         ${
           hasTags
             ? `
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             ${
               product.tags!.includes("premium")
                 ? `

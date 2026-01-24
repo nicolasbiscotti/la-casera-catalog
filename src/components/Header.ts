@@ -8,7 +8,7 @@ export function renderHeader(): string {
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
               ${icon("store", "w-5 h-5 sm:w-6 sm:h-6 text-white")}
             </div>
             <div>
