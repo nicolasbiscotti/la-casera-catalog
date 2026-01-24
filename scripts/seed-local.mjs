@@ -357,13 +357,13 @@ async function seed() {
       }
 
       // Create admin user document (Bypasses Rules)
-      await db.doc(`${getCollectionPath("adminUsers")}/${uid}`).set({
-        email: adminData.email,
-        displayName: adminData.displayName,
-        role: adminData.role,
-        isActive: true,
-        createdAt: now,
-      });
+      // await db.doc(`${getCollectionPath("adminUsers")}/${uid}`).set({
+      //   email: adminData.email,
+      //   displayName: adminData.displayName,
+      //   role: adminData.role,
+      //   isActive: true,
+      //   createdAt: now,
+      // });
     }
     console.log("");
 
