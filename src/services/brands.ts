@@ -12,18 +12,17 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { getFirestoreDb, getCollectionPath } from "./firebase";
-import type { Category, FirestoreTimestamp } from "@/types";
+import type { Brand, FirestoreTimestamp } from "@/types";
 
-const COLLECTION_NAME = "categories";
+const COLLECTION_NAME = "brands";
 
-// Convert Firestore document to Category
-function docToCategory(id: string, data: Record<string, unknown>): Category {
+// Convert Firestore document to Brand
+function docToBrand(id: string, data: Record<string, unknown>): Brand {
   return {
     id,
     name: data.name as string,
-    slug: data.slug as string,
     description: data.description as string | undefined,
-    iconName: data.iconName as string | undefined,
+    logoUrl: data.logoUrl as string | undefined,
     isActive: data.isActive as boolean,
     sortOrder: data.sortOrder as number,
     createdAt: (data.createdAt as FirestoreTimestamp)?.toDate() || new Date(),
@@ -33,27 +32,21 @@ function docToCategory(id: string, data: Record<string, unknown>): Category {
   };
 }
 
-// Get all categories
-export async function getCategories(): Promise<Category[]> {
+// Get all brands
+export async function getBrands(): Promise<Brand[]> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
-
-  console.log("data base ==> ", db);
-  console.log("collection path ==> ", collectionPath);
 
   const q = query(collection(db, collectionPath), orderBy("sortOrder", "asc"));
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => docToCategory(doc.id, doc.data()));
+  return snapshot.docs.map((doc) => docToBrand(doc.id, doc.data()));
 }
 
-// Get active categories only
-export async function getActiveCategories(): Promise<Category[]> {
+// Get active brands only
+export async function getActiveBrands(): Promise<Brand[]> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
-
-  console.log("data base ==> ", db);
-  console.log("collection path ==> ", collectionPath);
 
   const q = query(
     collection(db, collectionPath),
@@ -62,11 +55,11 @@ export async function getActiveCategories(): Promise<Category[]> {
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => docToCategory(doc.id, doc.data()));
+  return snapshot.docs.map((doc) => docToBrand(doc.id, doc.data()));
 }
 
-// Get category by ID
-export async function getCategoryById(id: string): Promise<Category | null> {
+// Get brand by ID
+export async function getBrandById(id: string): Promise<Brand | null> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
 
@@ -74,32 +67,20 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) return null;
-  return docToCategory(docSnap.id, docSnap.data());
+  return docToBrand(docSnap.id, docSnap.data());
 }
 
-// Get category by slug
-export async function getCategoryBySlug(
-  slug: string,
-): Promise<Category | null> {
-  const db = getFirestoreDb();
-  const collectionPath = getCollectionPath(COLLECTION_NAME);
-
-  const q = query(collection(db, collectionPath), where("slug", "==", slug));
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-
-  const doc = snapshot.docs[0];
-  return docToCategory(doc.id, doc.data());
-}
-
-// Create category
-export async function createCategory(
-  data: Omit<Category, "id" | "createdAt" | "updatedAt">,
+// Create brand
+export async function createBrand(
+  data: Omit<Brand, "id" | "createdAt" | "updatedAt">,
   userId?: string,
-): Promise<Category> {
+): Promise<Brand> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
+
+  console.log("db ==> ", db);
+  console.log("collectionPath ==> ", collectionPath);
+  console.log("create brand function ==> ", data);
 
   const now = Timestamp.now();
   const docData = {
@@ -111,17 +92,13 @@ export async function createCategory(
   };
 
   const docRef = await addDoc(collection(db, collectionPath), docData);
-  return docToCategory(docRef.id, {
-    ...docData,
-    createdAt: now,
-    updatedAt: now,
-  });
+  return docToBrand(docRef.id, { ...docData, createdAt: now, updatedAt: now });
 }
 
-// Update category
-export async function updateCategory(
+// Update brand
+export async function updateBrand(
   id: string,
-  data: Partial<Omit<Category, "id" | "createdAt" | "updatedAt">>,
+  data: Partial<Omit<Brand, "id" | "createdAt" | "updatedAt">>,
   userId?: string,
 ): Promise<void> {
   const db = getFirestoreDb();
@@ -135,8 +112,8 @@ export async function updateCategory(
   });
 }
 
-// Delete category
-export async function deleteCategory(id: string): Promise<void> {
+// Delete brand
+export async function deleteBrand(id: string): Promise<void> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
 

@@ -1,29 +1,12 @@
-/**
- * Services barrel export
- * Import all services from this single file
- */
-
-// Firebase initialization
-export { 
-  initializeFirebase, 
-  getDb, 
-  getAuthInstance, 
-  db, 
-  auth,
-  ensureAuthenticated,
-  initializeAuth,
-  hasAdminClaim,
-  refreshAuthToken,
-} from './firebase';
-
-// Configuration
-export { 
-  firebaseConfig, 
-  COLLECTIONS, 
-  getCollectionPath, 
-  useEmulators, 
-  emulatorConfig 
-} from './firebase.config';
+// Firebase
+export {
+  getFirebaseApp,
+  getFirestoreDb,
+  getFirebaseAuth,
+  getCollectionPath,
+  environment,
+  isLocalDev,
+} from "./firebase";
 
 // Categories
 export {
@@ -34,56 +17,26 @@ export {
   createCategory,
   updateCategory,
   deleteCategory,
-  toggleCategoryActive,
-} from './categoriesService';
+} from "./categories";
 
 // Brands
 export {
   getBrands,
   getActiveBrands,
   getBrandById,
-  getBrandsByCategory,
   createBrand,
   updateBrand,
   deleteBrand,
-  toggleBrandActive,
-} from './brandsService';
+} from "./brands";
 
 // Products
 export {
   getProducts,
   getAvailableProducts,
-  getProductById,
   getProductsByCategory,
   getProductsByBrand,
-  getProductsByCategoryAndBrand,
-  searchProducts,
+  getProductById,
   createProduct,
   updateProduct,
-  updateProductPrices,
   deleteProduct,
-  toggleProductAvailable,
-  getProductsCountByCategory,
-  getProductsCountByBrand,
-} from './productsService';
-
-// Price History
-export {
-  getPriceHistory,
-  getProductPriceHistory,
-  logPriceChange,
-  getRecentPriceChanges,
-} from './priceHistoryService';
-
-// Authentication
-export {
-  login,
-  logout,
-  getCurrentUser,
-  getCurrentAdminUser,
-  isAuthenticated,
-  isAnonymous,
-  isAdmin,
-  onAuthChange,
-  waitForAuth,
-} from './authService';
+} from "./products";

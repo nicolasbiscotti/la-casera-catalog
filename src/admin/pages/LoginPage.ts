@@ -1,182 +1,96 @@
-/**
- * Admin Login Page
- * Authentication form for admin panel access
- */
+import { adminIcon } from "../components/icons";
+import { login, getAuthState } from "../store/authStore";
 
-import { createIcon } from '../components/icons';
-import { authStore, authActions } from '../store/authStore';
-import { router } from '@/router';
+export function renderLoginPage(): string {
+  const { isLoading, error } = getAuthState();
 
-export function createLoginPage(): HTMLElement {
-  const page = document.createElement('div');
-  page.className = 'min-h-screen bg-gradient-to-br from-warm-100 to-warm-200 flex items-center justify-center p-4';
-
-  page.innerHTML = `
-    <div class="w-full max-w-md">
-      <!-- Logo -->
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 mx-auto rounded-2xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg mb-4">
-          ${createIcon('store', { size: 32, className: 'text-white' })}
-        </div>
-        <h1 class="font-display text-2xl font-bold text-warm-900">La Casera</h1>
-        <p class="text-warm-500">Panel de Administración</p>
-      </div>
-
-      <!-- Login Card -->
-      <div class="bg-white rounded-2xl shadow-xl border border-warm-200 p-6 lg:p-8">
-        <h2 class="font-display text-xl font-semibold text-warm-800 mb-6">Iniciar Sesión</h2>
-
-        <!-- Error message -->
-        <div id="error-message" class="hidden mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm  items-center gap-2">
-          ${createIcon('alertCircle', { size: 18 })}
-          <span id="error-text"></span>
-        </div>
-
-        <form id="login-form" class="space-y-4">
-          <div>
-            <label for="email" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              autocomplete="email"
-              class="w-full px-4 py-3 rounded-lg border border-warm-300 text-warm-800 placeholder:text-warm-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-              placeholder="admin@lacasera.com"
-            />
+  return `
+    <div class="min-h-screen flex items-center justify-center bg-linear-to-br from-warm-100 to-warm-200 p-4">
+      <div class="w-full max-w-md animate-slide-up">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
+            ${adminIcon("store", "w-8 h-8 text-white")}
           </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Contraseña
-            </label>
-            <div class="relative">
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                autocomplete="current-password"
-                class="w-full px-4 py-3 rounded-lg border border-warm-300 text-warm-800 placeholder:text-warm-400 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors pr-12"
-                placeholder="••••••••"
+          <h1 class="text-2xl font-bold text-warm-800 font-display">La Casera</h1>
+          <p class="text-warm-500">Panel de Administración</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <form id="login-form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-warm-700 mb-1.5">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                required 
+                autocomplete="email"
+                class="w-full px-4 py-3 rounded-xl border-2 border-warm-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all" 
+                placeholder="admin@lacasera.com"
               />
-              <button
-                type="button"
-                id="toggle-password"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600 transition-colors"
-              >
-                ${createIcon('eye', { size: 20 })}
-              </button>
             </div>
-          </div>
-
-          <button
-            type="submit"
-            id="submit-btn"
-            class="w-full py-3 px-4 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span id="btn-text">Ingresar</span>
-            <span id="btn-loader" class="hidden">
-              <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
-          </button>
-        </form>
-
-        <!-- Demo credentials -->
-        <div class="mt-6 pt-6 border-t border-warm-100">
-          <p class="text-xs text-warm-500 mb-2">Credenciales de demo:</p>
-          <div class="space-y-1 text-xs text-warm-600 bg-warm-50 rounded-lg p-3">
-            <p><strong>Admin:</strong> admin@lacasera.com / admin123</p>
-            <p><strong>Editor:</strong> editor@lacasera.com / editor123</p>
+            <div>
+              <label class="block text-sm font-medium text-warm-700 mb-1.5">Contraseña</label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="password" 
+                  required 
+                  autocomplete="current-password"
+                  class="w-full px-4 py-3 rounded-xl border-2 border-warm-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all pr-12" 
+                  placeholder="••••••••"
+                />
+                <button 
+                  type="button" 
+                  id="toggle-password" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
+                >
+                  ${adminIcon("eye")}
+                </button>
+              </div>
+            </div>
+            <div id="login-error" class="${error ? "" : "hidden"} text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+              ${error || ""}
+            </div>
+            <button 
+              type="submit" 
+              ${isLoading ? "disabled" : ""}
+              class="w-full py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              ${isLoading ? `${adminIcon("loader", "w-5 h-5")} Iniciando...` : "Iniciar Sesión"}
+            </button>
+          </form>
+          <div class="mt-6 p-4 bg-warm-50 rounded-xl">
+            <p class="text-xs text-warm-500 mb-2">Credenciales de prueba:</p>
+            <p class="text-xs text-warm-600"><strong>Admin:</strong> admin@lacasera.com / admin123</p>
+            <p class="text-xs text-warm-600"><strong>Editor:</strong> editor@lacasera.com / editor123</p>
           </div>
         </div>
-      </div>
-
-      <!-- Back to store link -->
-      <div class="text-center mt-6">
-        <a href="#/" class="text-sm text-warm-500 hover:text-brand-600 transition-colors flex items-center justify-center gap-1">
-          ${createIcon('arrowLeft', { size: 16 })}
-          Volver a la tienda
-        </a>
+        <p class="text-center mt-6 text-sm text-warm-500">
+          <a href="#/" class="text-brand-600 hover:underline">← Volver al catálogo público</a>
+        </p>
       </div>
     </div>
   `;
-
-  // Setup handlers
-  setTimeout(() => setupLoginHandlers(page), 0);
-
-  return page;
 }
 
-function setupLoginHandlers(page: HTMLElement): void {
-  const form = page.querySelector('#login-form') as HTMLFormElement;
-  const emailInput = page.querySelector('#email') as HTMLInputElement;
-  const passwordInput = page.querySelector('#password') as HTMLInputElement;
-  const togglePasswordBtn = page.querySelector('#toggle-password') as HTMLButtonElement;
-  const submitBtn = page.querySelector('#submit-btn') as HTMLButtonElement;
-  const btnText = page.querySelector('#btn-text') as HTMLElement;
-  const btnLoader = page.querySelector('#btn-loader') as HTMLElement;
-  const errorMessage = page.querySelector('#error-message') as HTMLElement;
-  const errorText = page.querySelector('#error-text') as HTMLElement;
+// Attach login form event listeners
+export function attachLoginListeners(): void {
+  const form = document.getElementById("login-form");
+  const toggleBtn = document.getElementById("toggle-password");
 
-  // Toggle password visibility
-  let passwordVisible = false;
-  togglePasswordBtn?.addEventListener('click', () => {
-    passwordVisible = !passwordVisible;
-    passwordInput.type = passwordVisible ? 'text' : 'password';
-    togglePasswordBtn.innerHTML = createIcon(passwordVisible ? 'eyeOff' : 'eye', { size: 20 });
-  });
-
-  // Subscribe to auth state
-  authStore.subscribe(state => {
-    if (state.error) {
-      errorMessage.classList.remove('hidden');
-      errorMessage.classList.add('flex');
-      errorText.textContent = state.error;
-    } else {
-      errorMessage.classList.add('hidden');
-      errorMessage.classList.remove('flex');
-    }
-
-    if (state.isLoading) {
-      submitBtn.disabled = true;
-      btnText.classList.add('hidden');
-      btnLoader.classList.remove('hidden');
-    } else {
-      submitBtn.disabled = false;
-      btnText.classList.remove('hidden');
-      btnLoader.classList.add('hidden');
-    }
-  });
-
-  // Form submission
-  form?.addEventListener('submit', async (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
 
-    if (!email || !password) {
-      authStore.setState({ error: 'Por favor completa todos los campos' });
-      return;
-    }
+    const email = (document.getElementById("email") as HTMLInputElement).value;
+    const password = (document.getElementById("password") as HTMLInputElement)
+      .value;
 
-    const success = await authActions.login(email, password);
-    
-    if (success) {
-      router.navigate('/admin');
-    }
+    await login(email, password);
   });
 
-  // Clear error on input
-  [emailInput, passwordInput].forEach(input => {
-    input?.addEventListener('input', () => {
-      authActions.clearError();
-    });
+  toggleBtn?.addEventListener("click", () => {
+    const input = document.getElementById("password") as HTMLInputElement;
+    const isPassword = input.type === "password";
+    input.type = isPassword ? "text" : "password";
+    toggleBtn.innerHTML = adminIcon(isPassword ? "eyeOff" : "eye");
   });
 }

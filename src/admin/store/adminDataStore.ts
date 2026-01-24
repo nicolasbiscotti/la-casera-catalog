@@ -1,301 +1,266 @@
-/**
- * Admin Data Store
- * Manages CRUD operations for categories, brands, and products
- * Uses mock data for demo, connects to Firestore in production
- */
+import type { Category, Brand, Product, PriceChange } from "@/types";
+import {
+  getCategories,
+  getBrands,
+  getProducts,
+  createCategory,
+  updateCategory,
+  deleteCategory as deleteFirestoreCategory,
+  createBrand,
+  updateBrand,
+  deleteBrand as deleteFirestoreBrand,
+  createProduct,
+  updateProduct,
+  deleteProduct as deleteFirestoreProduct,
+} from "@/services";
+import { getCurrentUser } from "./authStore";
 
-import { createStore } from '@/store/catalogStore';
-import type { Category, Brand, Product, ProductPrice, PriceChangeLog } from '@/types';
-import { mockCategories, mockBrands, mockProducts } from '@/services/mockData';
-
-export interface AdminDataState {
+// Admin Data State
+interface AdminDataState {
   categories: Category[];
   brands: Brand[];
   products: Product[];
-  priceHistory: PriceChangeLog[];
+  priceHistory: PriceChange[];
   isLoading: boolean;
   error: string | null;
-  lastUpdated: Date | null;
 }
 
-const initialState: AdminDataState = {
-  categories: [...mockCategories],
-  brands: [...mockBrands],
-  products: [...mockProducts],
+let state: AdminDataState = {
+  categories: [],
+  brands: [],
+  products: [],
   priceHistory: [],
-  isLoading: false,
+  isLoading: true,
   error: null,
-  lastUpdated: new Date(),
 };
 
-export const adminDataStore = createStore<AdminDataState>(initialState);
+// Subscribers
+type Subscriber = (state: AdminDataState) => void;
+const subscribers: Set<Subscriber> = new Set();
 
-// Generate unique ID
-function generateId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+// Get current state
+export function getAdminState(): AdminDataState {
+  return state;
 }
 
-// Admin data actions
-export const adminDataActions = {
-  // ============================================================
-  // CATEGORIES
-  // ============================================================
+// Subscribe to state changes
+export function subscribeAdmin(callback: Subscriber): () => void {
+  subscribers.add(callback);
+  return () => subscribers.delete(callback);
+}
 
-  getCategories: (): Category[] => {
-    return adminDataStore.getState().categories;
-  },
+// Notify subscribers
+function notifySubscribers(): void {
+  subscribers.forEach((callback) => callback(state));
+}
 
-  getCategoryById: (id: string): Category | undefined => {
-    return adminDataStore.getState().categories.find(c => c.id === id);
-  },
+// Update state
+function setAdminState(updates: Partial<AdminDataState>): void {
+  state = { ...state, ...updates };
+  notifySubscribers();
+}
 
-  createCategory: (data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Category => {
-    const newCategory: Category = {
-      ...data,
-      id: generateId('cat'),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+// Load all data
+export async function loadAdminData(): Promise<void> {
+  setAdminState({ isLoading: true, error: null });
 
-    adminDataStore.setState(state => ({
-      categories: [...state.categories, newCategory],
-      lastUpdated: new Date(),
-    }));
+  try {
+    const [categories, brands, products] = await Promise.all([
+      getCategories(),
+      getBrands(),
+      getProducts(),
+    ]);
 
-    return newCategory;
-  },
-
-  updateCategory: (id: string, data: Partial<Category>): Category | null => {
-    let updatedCategory: Category | null = null;
-
-    adminDataStore.setState(state => ({
-      categories: state.categories.map(c => {
-        if (c.id === id) {
-          updatedCategory = { ...c, ...data, updatedAt: new Date() };
-          return updatedCategory;
-        }
-        return c;
-      }),
-      lastUpdated: new Date(),
-    }));
-
-    return updatedCategory;
-  },
-
-  deleteCategory: (id: string): boolean => {
-    const { products } = adminDataStore.getState();
-    const hasProducts = products.some(p => p.categoryId === id);
-    
-    if (hasProducts) {
-      adminDataStore.setState({ error: 'No se puede eliminar: hay productos en esta categoría' });
-      return false;
-    }
-
-    adminDataStore.setState(state => ({
-      categories: state.categories.filter(c => c.id !== id),
-      lastUpdated: new Date(),
-    }));
-
-    return true;
-  },
-
-  // ============================================================
-  // BRANDS
-  // ============================================================
-
-  getBrands: (): Brand[] => {
-    return adminDataStore.getState().brands;
-  },
-
-  getBrandById: (id: string): Brand | undefined => {
-    return adminDataStore.getState().brands.find(b => b.id === id);
-  },
-
-  createBrand: (data: Omit<Brand, 'id' | 'createdAt' | 'updatedAt'>): Brand => {
-    const newBrand: Brand = {
-      ...data,
-      id: generateId('brand'),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    adminDataStore.setState(state => ({
-      brands: [...state.brands, newBrand],
-      lastUpdated: new Date(),
-    }));
-
-    return newBrand;
-  },
-
-  updateBrand: (id: string, data: Partial<Brand>): Brand | null => {
-    let updatedBrand: Brand | null = null;
-
-    adminDataStore.setState(state => ({
-      brands: state.brands.map(b => {
-        if (b.id === id) {
-          updatedBrand = { ...b, ...data, updatedAt: new Date() };
-          return updatedBrand;
-        }
-        return b;
-      }),
-      lastUpdated: new Date(),
-    }));
-
-    return updatedBrand;
-  },
-
-  deleteBrand: (id: string): boolean => {
-    const { products } = adminDataStore.getState();
-    const hasProducts = products.some(p => p.brandId === id);
-    
-    if (hasProducts) {
-      adminDataStore.setState({ error: 'No se puede eliminar: hay productos de esta marca' });
-      return false;
-    }
-
-    adminDataStore.setState(state => ({
-      brands: state.brands.filter(b => b.id !== id),
-      lastUpdated: new Date(),
-    }));
-
-    return true;
-  },
-
-  // ============================================================
-  // PRODUCTS
-  // ============================================================
-
-  getProducts: (): Product[] => {
-    return adminDataStore.getState().products;
-  },
-
-  getProductById: (id: string): Product | undefined => {
-    return adminDataStore.getState().products.find(p => p.id === id);
-  },
-
-  getProductsByCategory: (categoryId: string): Product[] => {
-    return adminDataStore.getState().products.filter(p => p.categoryId === categoryId);
-  },
-
-  getProductsByBrand: (brandId: string): Product[] => {
-    return adminDataStore.getState().products.filter(p => p.brandId === brandId);
-  },
-
-  createProduct: (data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product => {
-    const newProduct: Product = {
-      ...data,
-      id: generateId('prod'),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    adminDataStore.setState(state => ({
-      products: [...state.products, newProduct],
-      lastUpdated: new Date(),
-    }));
-
-    return newProduct;
-  },
-
-  updateProduct: (id: string, data: Partial<Product>): Product | null => {
-    let updatedProduct: Product | null = null;
-    const { products } = adminDataStore.getState();
-    const existingProduct = products.find(p => p.id === id);
-
-    // Log price change if prices are being updated
-    if (data.prices && existingProduct) {
-      const priceLog: PriceChangeLog = {
-        id: generateId('log'),
-        productId: id,
-        productName: existingProduct.name,
-        previousPrices: existingProduct.prices,
-        newPrices: data.prices,
-        changedBy: 'admin', // In production, get from auth
-        changedAt: new Date(),
-      };
-
-      adminDataStore.setState(state => ({
-        priceHistory: [priceLog, ...state.priceHistory].slice(0, 100), // Keep last 100
-      }));
-    }
-
-    adminDataStore.setState(state => ({
-      products: state.products.map(p => {
-        if (p.id === id) {
-          updatedProduct = { ...p, ...data, updatedAt: new Date() };
-          return updatedProduct;
-        }
-        return p;
-      }),
-      lastUpdated: new Date(),
-    }));
-
-    return updatedProduct;
-  },
-
-  deleteProduct: (id: string): boolean => {
-    adminDataStore.setState(state => ({
-      products: state.products.filter(p => p.id !== id),
-      lastUpdated: new Date(),
-    }));
-    return true;
-  },
-
-  toggleProductAvailability: (id: string): boolean => {
-    const product = adminDataStore.getState().products.find(p => p.id === id);
-    if (!product) return false;
-
-    adminDataActions.updateProduct(id, { isAvailable: !product.isAvailable });
-    return true;
-  },
-
-  // ============================================================
-  // BULK OPERATIONS
-  // ============================================================
-
-  bulkUpdatePrices: (updates: Array<{ productId: string; prices: ProductPrice[] }>): number => {
-    let updatedCount = 0;
-
-    updates.forEach(({ productId, prices }) => {
-      const result = adminDataActions.updateProduct(productId, { prices });
-      if (result) updatedCount++;
+    setAdminState({
+      categories,
+      brands,
+      products,
+      isLoading: false,
     });
+  } catch (error) {
+    console.error("Error loading admin data:", error);
+    setAdminState({
+      isLoading: false,
+      error: error instanceof Error ? error.message : "Error al cargar datos",
+    });
+  }
+}
 
-    return updatedCount;
-  },
+// Category CRUD
+export async function saveCategory(
+  data: Omit<Category, "id" | "createdAt" | "updatedAt">,
+  id?: string,
+): Promise<boolean> {
+  try {
+    const userId = getCurrentUser()?.uid;
 
-  // ============================================================
-  // PRICE HISTORY
-  // ============================================================
-
-  getPriceHistory: (productId?: string): PriceChangeLog[] => {
-    const { priceHistory } = adminDataStore.getState();
-    if (productId) {
-      return priceHistory.filter(log => log.productId === productId);
+    if (id) {
+      await updateCategory(id, data, userId);
+    } else {
+      await createCategory(data, userId);
     }
-    return priceHistory;
-  },
 
-  // ============================================================
-  // UTILS
-  // ============================================================
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error saving category:", error);
+    return false;
+  }
+}
 
-  clearError: (): void => {
-    adminDataStore.setState({ error: null });
-  },
+export async function removeCategory(id: string): Promise<boolean> {
+  // Check if category has products
+  const hasProducts = state.products.some((p) => p.categoryId === id);
+  if (hasProducts) {
+    return false;
+  }
 
-  // Get stats for dashboard
-  getStats: () => {
-    const { categories, brands, products } = adminDataStore.getState();
-    const availableProducts = products.filter(p => p.isAvailable).length;
-    const unavailableProducts = products.length - availableProducts;
+  try {
+    await deleteFirestoreCategory(id);
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return false;
+  }
+}
 
-    return {
-      totalCategories: categories.length,
-      totalBrands: brands.length,
-      totalProducts: products.length,
-      availableProducts,
-      unavailableProducts,
-    };
-  },
-};
+// Brand CRUD
+export async function saveBrand(
+  data: Omit<Brand, "id" | "createdAt" | "updatedAt">,
+  id?: string,
+): Promise<boolean> {
+  try {
+    console.log("save brand function ==> ", data);
+
+    const userId = getCurrentUser()?.uid;
+
+    if (id) {
+      await updateBrand(id, data, userId);
+    } else {
+      console.log("create new one ==> ", data);
+      const brand = await createBrand(data, userId);
+      console.log("new brand ==> ", brand);
+    }
+
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error saving brand:", error);
+    return false;
+  }
+}
+
+export async function removeBrand(id: string): Promise<boolean> {
+  // Check if brand has products
+  const hasProducts = state.products.some((p) => p.brandId === id);
+  if (hasProducts) {
+    return false;
+  }
+
+  try {
+    await deleteFirestoreBrand(id);
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error deleting brand:", error);
+    return false;
+  }
+}
+
+// Product CRUD
+export async function saveProduct(
+  data: Omit<Product, "id" | "createdAt" | "updatedAt">,
+  id?: string,
+): Promise<boolean> {
+  try {
+    const userId = getCurrentUser()?.uid;
+
+    // Track price changes
+    if (id) {
+      const existingProduct = state.products.find((p) => p.id === id);
+      if (existingProduct) {
+        const oldPrices = JSON.stringify(existingProduct.prices);
+        const newPrices = JSON.stringify(data.prices);
+
+        if (oldPrices !== newPrices) {
+          const priceChange: PriceChange = {
+            id: `ph-${Date.now()}`,
+            productId: id,
+            previousPrices: existingProduct.prices,
+            newPrices: data.prices,
+            changedAt: new Date(),
+            changedBy: userId || "unknown",
+          };
+
+          state.priceHistory = [priceChange, ...state.priceHistory];
+        }
+      }
+
+      await updateProduct(id, data, userId);
+    } else {
+      await createProduct(data, userId);
+    }
+
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error saving product:", error);
+    return false;
+  }
+}
+
+export async function removeProduct(id: string): Promise<boolean> {
+  try {
+    await deleteFirestoreProduct(id);
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    return false;
+  }
+}
+
+export async function toggleProductAvailability(id: string): Promise<boolean> {
+  const product = state.products.find((p) => p.id === id);
+  if (!product) return false;
+
+  try {
+    const userId = getCurrentUser()?.uid;
+    await updateProduct(id, { isAvailable: !product.isAvailable }, userId);
+    await loadAdminData();
+    return true;
+  } catch (error) {
+    console.error("Error toggling product availability:", error);
+    return false;
+  }
+}
+
+// Selectors
+export function getCategoryById(id: string): Category | undefined {
+  return state.categories.find((c) => c.id === id);
+}
+
+export function getBrandById(id: string): Brand | undefined {
+  return state.brands.find((b) => b.id === id);
+}
+
+export function getProductById(id: string): Product | undefined {
+  return state.products.find((p) => p.id === id);
+}
+
+export function getProductCountByCategory(categoryId: string): number {
+  return state.products.filter((p) => p.categoryId === categoryId).length;
+}
+
+export function getProductCountByBrand(brandId: string): number {
+  return state.products.filter((p) => p.brandId === brandId).length;
+}
+
+export function getAvailableProductsCount(): number {
+  return state.products.filter((p) => p.isAvailable).length;
+}
+
+export function getPriceHistory(): PriceChange[] {
+  return state.priceHistory;
+}

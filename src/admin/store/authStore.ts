@@ -1,211 +1,108 @@
-/**
- * Admin Authentication Store
- * Manages authentication state for the admin panel
- * Uses Firebase Auth with Custom Claims
- */
-
-import { createStore } from "@/store/catalogStore";
 import {
-  login as firebaseLogin,
-  logout as firebaseLogout,
-  getCurrentAdminUser,
-  onAuthChange,
-  isAdmin as checkIsAdmin,
-} from "@/services/authService";
-import { getAuthInstance } from "@/services/firebase";
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
+import { getFirebaseAuth } from "@/services/firebase";
 
-export interface AdminUser {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: "admin" | "editor" | "viewer";
-}
-
-export interface AuthState {
-  user: AdminUser | null;
-  isAuthenticated: boolean;
+// Admin State
+interface AdminAuthState {
+  user: User | null;
   isLoading: boolean;
   error: string | null;
+  isInitialized: boolean;
 }
 
-const initialState: AuthState = {
+let state: AdminAuthState = {
   user: null,
-  isAuthenticated: false,
   isLoading: true,
   error: null,
+  isInitialized: false,
 };
 
-export const authStore = createStore<AuthState>(initialState);
+// Subscribers
+type Subscriber = (state: AdminAuthState) => void;
+const subscribers: Set<Subscriber> = new Set();
 
-// Auth actions
-export const authActions = {
-  /**
-   * Initialize auth state from Firebase
-   */
-  init: async (): Promise<void> => {
-    authStore.setState({ isLoading: true });
+// Get current state
+export function getAuthState(): AdminAuthState {
+  return state;
+}
 
-    try {
-      const auth = getAuthInstance();
+// Subscribe to state changes
+export function subscribeAuth(callback: Subscriber): () => void {
+  subscribers.add(callback);
+  return () => subscribers.delete(callback);
+}
 
-      // Wait for auth state to be determined
-      return new Promise((resolve) => {
-        const unsubscribe = onAuthChange(async (user) => {
-          unsubscribe();
+// Notify subscribers
+function notifySubscribers(): void {
+  subscribers.forEach((callback) => callback(state));
+}
 
-          if (user && !user.isAnonymous) {
-            // User is logged in (not anonymous)
-            try {
-              const adminUser = await getCurrentAdminUser();
-              if (adminUser) {
-                authStore.setState({
-                  user: {
-                    uid: adminUser.uid,
-                    email: adminUser.email,
-                    displayName: adminUser.displayName || "Admin",
-                    role: adminUser.role,
-                  },
-                  isAuthenticated: true,
-                  isLoading: false,
-                  error: null,
-                });
-              } else {
-                authStore.setState({
-                  user: null,
-                  isAuthenticated: false,
-                  isLoading: false,
-                  error: null,
-                });
-              }
-            } catch {
-              authStore.setState({
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null,
-              });
-            }
-          } else {
-            // No user or anonymous user
-            authStore.setState({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-              error: null,
-            });
-          }
-          resolve();
-        });
-      });
-    } catch {
-      authStore.setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
-    }
-  },
+// Update state
+function setAuthState(updates: Partial<AdminAuthState>): void {
+  state = { ...state, ...updates };
+  notifySubscribers();
+}
 
-  /**
-   * Login with email and password
-   */
-  login: async (email: string, password: string): Promise<boolean> => {
-    authStore.setState({ isLoading: true, error: null });
+// Initialize auth listener
+export function initAuthListener(): void {
+  const auth = getFirebaseAuth();
 
-    try {
-      const adminUser = await firebaseLogin(email, password);
-
-      authStore.setState({
-        user: {
-          uid: adminUser.uid,
-          email: adminUser.email,
-          displayName: adminUser.displayName || "Admin",
-          role: adminUser.role,
-        },
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      return true;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Credenciales inválidas. Intenta de nuevo.";
-
-      authStore.setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: errorMessage,
-      });
-
-      return false;
-    }
-  },
-
-  /**
-   * Logout current user
-   */
-  logout: async (): Promise<void> => {
-    try {
-      await firebaseLogout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-
-    authStore.setState({
-      user: null,
-      isAuthenticated: false,
+  onAuthStateChanged(auth, (user) => {
+    setAuthState({
+      user,
       isLoading: false,
+      isInitialized: true,
       error: null,
     });
-  },
+  });
+}
 
-  /**
-   * Clear error message
-   */
-  clearError: (): void => {
-    authStore.setState({ error: null });
-  },
+// Login
+export async function login(email: string, password: string): Promise<boolean> {
+  setAuthState({ isLoading: true, error: null });
 
-  /**
-   * Check if user has specific permission
-   */
-  hasPermission: (requiredRole: "admin" | "editor" | "viewer"): boolean => {
-    const { user } = authStore.getState();
-    if (!user) return false;
-
-    const roleHierarchy: Record<string, number> = {
-      admin: 3,
-      editor: 2,
-      viewer: 1,
-    };
-
-    return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
-  },
-
-  /**
-   * Check if current user has admin Custom Claim (fast check)
-   */
-  checkAdminClaim: async (): Promise<boolean> => {
-    return await checkIsAdmin();
-  },
-};
-
-// Auth guard for protected routes
-export const authGuard = (): boolean => {
-  const { isAuthenticated, isLoading } = authStore.getState();
-
-  // If still loading, wait
-  if (isLoading) {
+  try {
+    const auth = getFirebaseAuth();
+    await signInWithEmailAndPassword(auth, email, password);
+    setAuthState({ isLoading: false });
+    return true;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Error de autenticación";
+    setAuthState({ isLoading: false, error: message });
     return false;
   }
+}
 
-  return isAuthenticated;
-};
+// Logout
+export async function logout(): Promise<void> {
+  try {
+    const auth = getFirebaseAuth();
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+}
 
-// Initialize auth on module load
-authActions.init();
+// Check if user is authenticated
+export function isAuthenticated(): boolean {
+  return state.user !== null;
+}
+
+// Get current user
+export function getCurrentUser(): User | null {
+  return state.user;
+}
+
+// Get user display info
+export function getUserInfo(): { name: string; email: string } {
+  const user = state.user;
+  return {
+    name: user?.displayName || user?.email?.split("@")[0] || "Usuario",
+    email: user?.email || "",
+  };
+}
