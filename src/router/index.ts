@@ -1,186 +1,68 @@
-/**
- * Simple hash-based router for SPA navigation
- * Supports public catalog and admin panel routes
- */
-
-export interface Route {
+type Route = {
   path: string;
-  component: () => HTMLElement | Promise<HTMLElement>;
-  guard?: () => boolean | Promise<boolean>;
-  redirectTo?: string;
+  handler: () => void;
+};
+
+const routes: Route[] = [];
+let currentPath = "";
+
+// Register a route
+export function route(path: string, handler: () => void): void {
+  routes.push({ path, handler });
 }
 
-export interface Router {
-  routes: Route[];
-  currentPath: string;
-  navigate: (path: string) => void;
-  init: () => void;
+// Navigate to a path
+export function navigate(path: string): void {
+  window.location.hash = path;
 }
 
-type RouteChangeCallback = (path: string) => void;
+// Get current route path
+export function getCurrentPath(): string {
+  return window.location.hash.slice(1) || "/";
+}
 
-class AppRouter implements Router {
-  routes: Route[] = [];
-  currentPath: string = '/';
-  private container: HTMLElement | null = null;
-  private listeners: RouteChangeCallback[] = [];
+// Check if current path starts with prefix
+export function isPathPrefix(prefix: string): boolean {
+  return getCurrentPath().startsWith(prefix);
+}
 
-  constructor() {
-    this.handleHashChange = this.handleHashChange.bind(this);
-  }
-
-  setContainer(container: HTMLElement): void {
-    this.container = container;
-  }
-
-  addRoute(route: Route): void {
-    this.routes.push(route);
-  }
-
-  addRoutes(routes: Route[]): void {
-    this.routes.push(...routes);
-  }
-
-  onRouteChange(callback: RouteChangeCallback): () => void {
-    this.listeners.push(callback);
-    return () => {
-      this.listeners = this.listeners.filter(l => l !== callback);
-    };
-  }
-
-  private notifyListeners(): void {
-    this.listeners.forEach(callback => callback(this.currentPath));
-  }
-
-  navigate(path: string): void {
-    window.location.hash = path;
-  }
-
-  private getPathFromHash(): string {
-    const hash = window.location.hash.slice(1); // Remove #
-    return hash || '/';
-  }
-
-  private findRoute(path: string): Route | undefined {
-    // Exact match first
-    let route = this.routes.find(r => r.path === path);
-    if (route) return route;
-
-    // Try matching with params (e.g., /admin/products/:id)
-    for (const r of this.routes) {
-      const routeParts = r.path.split('/');
-      const pathParts = path.split('/');
-
-      if (routeParts.length !== pathParts.length) continue;
-
-      let match = true;
-      for (let i = 0; i < routeParts.length; i++) {
-        if (routeParts[i].startsWith(':')) continue; // Param placeholder
-        if (routeParts[i] !== pathParts[i]) {
-          match = false;
-          break;
-        }
-      }
-
-      if (match) return r;
-    }
-
-    return undefined;
-  }
-
-  extractParams(routePath: string, actualPath: string): Record<string, string> {
-    const params: Record<string, string> = {};
-    const routeParts = routePath.split('/');
-    const pathParts = actualPath.split('/');
-
-    for (let i = 0; i < routeParts.length; i++) {
-      if (routeParts[i].startsWith(':')) {
-        const paramName = routeParts[i].slice(1);
-        params[paramName] = pathParts[i];
-      }
-    }
-
-    return params;
-  }
-
-  private async handleHashChange(): Promise<void> {
-    const path = this.getPathFromHash();
-    this.currentPath = path;
-
-    const route = this.findRoute(path);
-
-    if (!route) {
-      // 404 - redirect to home
-      this.navigate('/');
+// Initialize router
+export function initRouter(): void {
+  function handleRoute(): void {
+    const path = getCurrentPath();
+    if (path === currentPath) {
       return;
     }
 
-    // Check guard
-    if (route.guard) {
-      const allowed = await route.guard();
-      if (!allowed) {
-        if (route.redirectTo) {
-          this.navigate(route.redirectTo);
-        } else {
-          this.navigate('/admin/login');
-        }
-        return;
+    currentPath = path;
+
+    // Find matching route
+    const matchedRoute = routes.find((r) => {
+      if (r.path === path) {
+        return true;
+      }
+      // Simple wildcard matching
+      if (r.path.endsWith("*")) {
+        const prefix = r.path.slice(0, -1);
+        return path.startsWith(prefix);
+      }
+      return false;
+    });
+
+    if (matchedRoute) {
+      matchedRoute.handler();
+    } else {
+      // Default to first route or 404
+      const defaultRoute = routes.find((r) => r.path === "/");
+      if (defaultRoute) {
+        defaultRoute.handler();
       }
     }
-
-    // Render component
-    if (this.container) {
-      this.container.innerHTML = '';
-      const component = await route.component();
-      this.container.appendChild(component);
-    }
-
-    this.notifyListeners();
   }
 
-  init(): void {
-    window.addEventListener('hashchange', this.handleHashChange);
-    
-    // Handle initial route
-    if (!window.location.hash) {
-      window.location.hash = '/';
-    } else {
-      this.handleHashChange();
-    }
-  }
+  // Listen for hash changes
+  window.addEventListener("hashchange", handleRoute);
 
-  destroy(): void {
-    window.removeEventListener('hashchange', this.handleHashChange);
-  }
-}
-
-// Singleton router instance
-export const router = new AppRouter();
-
-// Helper to create links
-export function createLink(path: string, text: string, className?: string): HTMLAnchorElement {
-  const link = document.createElement('a');
-  link.href = `#${path}`;
-  link.textContent = text;
-  if (className) link.className = className;
-  return link;
-}
-
-// Get current route params
-export function getRouteParams(): Record<string, string> {
-  const path = window.location.hash.slice(1) || '/';
-  const route = router.routes.find(r => {
-    const routeParts = r.path.split('/');
-    const pathParts = path.split('/');
-    if (routeParts.length !== pathParts.length) return false;
-    
-    for (let i = 0; i < routeParts.length; i++) {
-      if (routeParts[i].startsWith(':')) continue;
-      if (routeParts[i] !== pathParts[i]) return false;
-    }
-    return true;
-  });
-
-  if (!route) return {};
-  return router.extractParams(route.path, path);
+  // Handle initial route
+  handleRoute();
 }
