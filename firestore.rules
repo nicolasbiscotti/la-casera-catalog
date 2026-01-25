@@ -1,43 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
-
-    // ⚡️ FASTER & FREE: Check for "admin" Custom Claim in the Auth Token
-    // No database reads required.
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
-    }
-
-    // 🛡️ BOT PROTECTION: User must be signed in (Anonymously or Registered)
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // --- MAIN COLLECTIONS (Production) ---
+    function isAdmin() {
+      return isAuthenticated() && 
+      request.auth.token.role == 'admin';
+    }
 
+    function isEditor() {
+      return isAuthenticated() && 
+      (request.auth.token.role == 'admin' || request.auth.token.role == 'editor');
+    }
+
+    // Public read access for catalog data
     match /categories/{categoryId} {
       allow read: if isAuthenticated(); // 🔒 Prevents open scraping
-      allow write: if isAdmin();
+      allow write: if isEditor();
     }
 
     match /brands/{brandId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isEditor();
     }
 
     match /products/{productId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isEditor();
     }
 
+    // Price history - admin only write
     match /priceHistory/{historyId} {
-      allow read, write: if isAdmin();
+      allow read: if isEditor();
+      allow write: if isEditor();
     }
 
-    // Admin Users Profile
-    // Admins can read their own profile; nobody else can read or write it via Client SDK
+    // Admin users - admin only
     match /adminUsers/{userId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
       allow write: if false; // STRICTLY SERVER-SIDE ONLY
@@ -48,7 +49,8 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // --- ENVIRONMENT COLLECTIONS (Dev/Staging) ---
+
+    // Environment-specific collections
     match /environments/{envId}/{collection}/{docId} {
 
       // Analytics: Authenticated users can log events (create), but only Admins can manage them

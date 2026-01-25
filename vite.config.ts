@@ -1,20 +1,20 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": resolve(__dirname, "./src"),
     },
   },
   server: {
     port: 3000,
-    host: true,
+    strictPort: true,
   },
   build: {
-    outDir: "dist",
+    target: "ES2022",
     sourcemap: true,
   },
 });
