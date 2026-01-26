@@ -1,175 +1,108 @@
-/**
- * Admin Authentication Store
- * Manages authentication state for the admin panel
- * In production, this connects to Firebase Auth
- */
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from "firebase/auth";
+import { getFirebaseAuth } from "@/services/firebase";
 
-import { createStore } from '@/store/catalogStore';
-
-export interface AdminUser {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: 'admin' | 'editor' | 'viewer';
-}
-
-export interface AuthState {
-  user: AdminUser | null;
-  isAuthenticated: boolean;
+// Admin State
+interface AdminAuthState {
+  user: User | null;
   isLoading: boolean;
   error: string | null;
+  isInitialized: boolean;
 }
 
-const initialState: AuthState = {
+let state: AdminAuthState = {
   user: null,
-  isAuthenticated: false,
   isLoading: true,
   error: null,
+  isInitialized: false,
 };
 
-export const authStore = createStore<AuthState>(initialState);
+// Subscribers
+type Subscriber = (state: AdminAuthState) => void;
+const subscribers: Set<Subscriber> = new Set();
 
-// Mock admin users for demo (in production, use Firebase Auth)
-const MOCK_ADMIN_USERS: Record<string, { password: string; user: AdminUser }> = {
-  'admin@lacasera.com': {
-    password: 'admin123',
-    user: {
-      uid: 'admin-001',
-      email: 'admin@lacasera.com',
-      displayName: 'Administrador',
-      role: 'admin',
-    },
-  },
-  'editor@lacasera.com': {
-    password: 'editor123',
-    user: {
-      uid: 'editor-001',
-      email: 'editor@lacasera.com',
-      displayName: 'Editor',
-      role: 'editor',
-    },
-  },
-};
+// Get current state
+export function getAuthState(): AdminAuthState {
+  return state;
+}
 
-// Session storage key
-const SESSION_KEY = 'la_casera_admin_session';
+// Subscribe to state changes
+export function subscribeAuth(callback: Subscriber): () => void {
+  subscribers.add(callback);
+  return () => subscribers.delete(callback);
+}
 
-// Auth actions
-export const authActions = {
-  /**
-   * Initialize auth state from session storage
-   */
-  init: (): void => {
-    authStore.setState({ isLoading: true });
-    
-    try {
-      const session = sessionStorage.getItem(SESSION_KEY);
-      if (session) {
-        const user = JSON.parse(session) as AdminUser;
-        authStore.setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-      } else {
-        authStore.setState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
-      }
-    } catch {
-      authStore.setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
-    }
-  },
+// Notify subscribers
+function notifySubscribers(): void {
+  subscribers.forEach((callback) => callback(state));
+}
 
-  /**
-   * Login with email and password
-   */
-  login: async (email: string, password: string): Promise<boolean> => {
-    authStore.setState({ isLoading: true, error: null });
+// Update state
+function setAuthState(updates: Partial<AdminAuthState>): void {
+  state = { ...state, ...updates };
+  notifySubscribers();
+}
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+// Initialize auth listener
+export function initAuthListener(): void {
+  const auth = getFirebaseAuth();
 
-    const mockUser = MOCK_ADMIN_USERS[email.toLowerCase()];
-    
-    if (!mockUser || mockUser.password !== password) {
-      authStore.setState({
-        isLoading: false,
-        error: 'Credenciales inválidas. Intenta de nuevo.',
-      });
-      return false;
-    }
-
-    // Store session
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(mockUser.user));
-
-    authStore.setState({
-      user: mockUser.user,
-      isAuthenticated: true,
+  onAuthStateChanged(auth, (user) => {
+    setAuthState({
+      user,
       isLoading: false,
+      isInitialized: true,
       error: null,
     });
+  });
+}
 
+// Login
+export async function login(email: string, password: string): Promise<boolean> {
+  setAuthState({ isLoading: true, error: null });
+
+  try {
+    const auth = getFirebaseAuth();
+    await signInWithEmailAndPassword(auth, email, password);
+    setAuthState({ isLoading: false });
     return true;
-  },
-
-  /**
-   * Logout current user
-   */
-  logout: (): void => {
-    sessionStorage.removeItem(SESSION_KEY);
-    authStore.setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-    });
-  },
-
-  /**
-   * Clear error message
-   */
-  clearError: (): void => {
-    authStore.setState({ error: null });
-  },
-
-  /**
-   * Check if user has specific permission
-   */
-  hasPermission: (requiredRole: 'admin' | 'editor' | 'viewer'): boolean => {
-    const { user } = authStore.getState();
-    if (!user) return false;
-
-    const roleHierarchy: Record<string, number> = {
-      admin: 3,
-      editor: 2,
-      viewer: 1,
-    };
-
-    return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
-  },
-};
-
-// Auth guard for protected routes
-export const authGuard = (): boolean => {
-  const { isAuthenticated, isLoading } = authStore.getState();
-  
-  // If still loading, wait
-  if (isLoading) {
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Error de autenticación";
+    setAuthState({ isLoading: false, error: message });
     return false;
   }
-  
-  return isAuthenticated;
-};
+}
 
-// Initialize auth on module load
-authActions.init();
+// Logout
+export async function logout(): Promise<void> {
+  try {
+    const auth = getFirebaseAuth();
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+}
+
+// Check if user is authenticated
+export function isAuthenticated(): boolean {
+  return state.user !== null;
+}
+
+// Get current user
+export function getCurrentUser(): User | null {
+  return state.user;
+}
+
+// Get user display info
+export function getUserInfo(): { name: string; email: string } {
+  const user = state.user;
+  return {
+    name: user?.displayName || user?.email?.split("@")[0] || "Usuario",
+    email: user?.email || "",
+  };
+}

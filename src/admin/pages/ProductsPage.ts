@@ -1,466 +1,437 @@
-/**
- * Products Management Pages
- * List and form for CRUD operations on products
- */
+import { adminIcon } from "../components/icons";
+import { renderAdminHeader } from "../components/AdminLayout";
+import {
+  getAdminState,
+  saveProduct,
+  removeProduct,
+  toggleProductAvailability,
+  getProductById,
+} from "../store/adminDataStore";
+import { formatCurrency } from "@/utils";
+import type { Price } from "@/types";
 
-import { createAdminLayout, createCard } from '../components/AdminLayout';
-import { createDataTable, createTableHeaderAction } from '../components/DataTable';
-import { createIcon } from '../components/icons';
-import { adminDataStore, adminDataActions } from '../store/adminDataStore';
-import { router, getRouteParams } from '@/router';
-import { formatCurrency } from '@/utils/priceUtils';
-import type { Product, ProductPrice } from '@/types';
-
-// ============================================================
-// Products List Page
-// ============================================================
-
-export function createProductsListPage(): HTMLElement {
-  const content = document.createElement('div');
-  content.className = 'space-y-6';
-
-  const products = adminDataActions.getProducts();
-  const brands = adminDataActions.getBrands();
-  const categories = adminDataActions.getCategories();
-
-  const table = createDataTable<Product>({
-    columns: [
-      {
-        key: 'name',
-        label: 'Producto',
-        render: (item) => {
-          const brand = brands.find(b => b.id === item.brandId);
-          return `
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500">
-                ${createIcon('products', { size: 18 })}
-              </div>
-              <div>
-                <p class="font-medium text-warm-800">${item.name}</p>
-                <p class="text-xs text-warm-500">${brand?.name || 'Sin marca'}</p>
-              </div>
-            </div>
-          `;
-        },
-      },
-      {
-        key: 'categoryId',
-        label: 'Categoría',
-        className: 'hidden md:table-cell',
-        render: (item) => {
-          const category = categories.find(c => c.id === item.categoryId);
-          return `<span class="text-warm-600 text-sm">${category?.name || '-'}</span>`;
-        },
-      },
-      {
-        key: 'prices',
-        label: 'Precio',
-        render: (item) => {
-          const price = item.prices[0];
-          if (!price) return '-';
-          
-          if (price.type === 'unit') {
-            return `<span class="font-semibold text-brand-600">${formatCurrency(price.price)}</span>`;
-          } else if (price.type === 'weight') {
-            return `<span class="font-semibold text-brand-600">${formatCurrency(price.pricePerKg)}/kg</span>`;
-          } else if (price.type === 'fraction') {
-            return `<span class="font-semibold text-brand-600">${formatCurrency(price.prices.quarter)}</span>`;
-          }
-          return '-';
-        },
-      },
-      {
-        key: 'isAvailable',
-        label: 'Estado',
-        render: (item) => item.isAvailable
-          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">${createIcon('check', { size: 12 })} Disponible</span>`
-          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">${createIcon('cancel', { size: 12 })} Sin stock</span>`,
-      },
-    ],
-    data: products,
-    keyField: 'id',
-    searchable: true,
-    searchFields: ['name'],
-    emptyMessage: 'No hay productos. Crea el primero.',
-    onEdit: (item) => router.navigate(`/admin/products/${item.id}`),
-    onToggle: (item) => {
-      adminDataActions.toggleProductAvailability(item.id);
-      const newContent = createProductsListPage();
-      document.querySelector('#app')?.replaceChildren(newContent);
-    },
-    onDelete: (item) => {
-      adminDataActions.deleteProduct(item.id);
-      const newContent = createProductsListPage();
-      document.querySelector('#app')?.replaceChildren(newContent);
-    },
-  });
-
-  const addButton = createTableHeaderAction('Nuevo Producto', 'plus', () => {
-    router.navigate('/admin/products/new');
-  });
-
-  content.appendChild(createCard('Todos los Productos', table, addButton));
-
-  return createAdminLayout(content, 'Productos');
+function formatPriceDisplay(price: Price): string {
+  if (price.type === "unit")
+    return `${formatCurrency(price.price)}/${price.unitLabel}`;
+  if (price.type === "weight") return `${formatCurrency(price.pricePerKg)}/kg`;
+  if (price.type === "fraction")
+    return `${formatCurrency(price.prices.quarter || 0)} (1/4)`;
+  return "-";
 }
 
-// ============================================================
-// Product Form Page (Create/Edit)
-// ============================================================
+export function renderProductsListPage(
+  _onNavigate: (page: string, id?: string) => void,
+): string {
+  const { products, brands, categories, isLoading } = getAdminState();
 
-export function createProductFormPage(): HTMLElement {
-  const params = getRouteParams();
-  const isEdit = params.id && params.id !== 'new';
-  const product = isEdit ? adminDataActions.getProductById(params.id) : null;
-  
-  const categories = adminDataActions.getCategories();
-  const brands = adminDataActions.getBrands();
+  if (isLoading) {
+    return `
+      ${renderAdminHeader("Productos")}
+      <main class="p-4 lg:p-6">
+        <div class="flex items-center justify-center h-64">
+          ${adminIcon("loader", "w-8 h-8 text-brand-500")}
+        </div>
+      </main>
+    `;
+  }
 
-  const content = document.createElement('div');
-  content.className = 'max-w-3xl';
+  return `
+    ${renderAdminHeader("Productos")}
+    <main class="p-4 lg:p-6">
+      <div class="bg-white rounded-xl border border-warm-200">
+        <div class="p-4 border-b border-warm-100 flex items-center justify-between">
+          <h2 class="font-display font-semibold text-warm-800">Todos los Productos</h2>
+          <button data-action="new" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+            ${adminIcon("plus", "w-4 h-4")} Nuevo
+          </button>
+        </div>
+        <div class="divide-y divide-warm-100">
+          ${
+            products.length === 0
+              ? `
+            <div class="p-8 text-center text-warm-500">No hay productos creados</div>
+          `
+              : products
+                  .map((prod) => {
+                    const brand = brands.find((b) => b.id === prod.brandId);
+                    const cat = categories.find(
+                      (c) => c.id === prod.categoryId,
+                    );
+                    const price = prod.prices[0];
+                    const priceText = price ? formatPriceDisplay(price) : "-";
 
-  // Determine initial price type
-  const initialPriceType = product?.prices[0]?.type || 'unit';
-
-  content.innerHTML = `
-    <a href="#/admin/products" class="inline-flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6 transition-colors">
-      ${createIcon('arrowLeft', { size: 18 })}
-      Volver a productos
-    </a>
-
-    <div class="bg-white rounded-xl border border-warm-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-warm-100">
-        <h3 class="font-display text-lg font-semibold text-warm-800">
-          ${isEdit ? 'Editar Producto' : 'Nuevo Producto'}
-        </h3>
+                    return `
+              <div class="p-4 flex items-center justify-between hover:bg-warm-50">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500">
+                    ${adminIcon("products")}
+                  </div>
+                  <div>
+                    <p class="font-medium text-warm-800">${prod.name}</p>
+                    <p class="text-sm text-warm-500">${brand?.name || ""} · ${cat?.name || ""}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="font-semibold text-brand-600">${priceText}</span>
+                  <button data-toggle="${prod.id}" class="p-2 rounded-lg hover:bg-warm-200 ${
+                    prod.isAvailable ? "text-green-600" : "text-red-600"
+                  }">
+                    ${adminIcon(prod.isAvailable ? "eye" : "eyeOff", "w-4 h-4")}
+                  </button>
+                  <button data-edit="${prod.id}" class="p-2 rounded-lg hover:bg-warm-200 text-warm-600">
+                    ${adminIcon("edit", "w-4 h-4")}
+                  </button>
+                  <button data-delete="${prod.id}" class="p-2 rounded-lg hover:bg-red-100 text-red-600">
+                    ${adminIcon("trash", "w-4 h-4")}
+                  </button>
+                </div>
+              </div>
+            `;
+                  })
+                  .join("")
+          }
+        </div>
       </div>
+    </main>
+  `;
+}
 
-      <form id="product-form" class="p-6 space-y-6">
-        <!-- Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="name" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Nombre <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value="${product?.name || ''}"
-              class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-              placeholder="Ej: Jamón Cocido Natural"
-            />
-          </div>
+export function renderProductFormPage(
+  id: string | null,
+  _onNavigate: (page: string, id?: string) => void,
+): string {
+  const { brands, categories } = getAdminState();
+  const isEdit = id && id !== "new";
+  const product = isEdit ? getProductById(id) : null;
+  const priceType = product?.prices[0]?.type || "unit";
+  const price = product?.prices[0];
 
-          <div>
-            <label for="brandId" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Marca <span class="text-red-500">*</span>
-            </label>
-            <select
-              id="brandId"
-              name="brandId"
-              required
-              class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-            >
-              <option value="">Seleccionar marca</option>
-              ${brands.map(b => `<option value="${b.id}" ${product?.brandId === b.id ? 'selected' : ''}>${b.name}</option>`).join('')}
-            </select>
-          </div>
+  return `
+    ${renderAdminHeader(isEdit ? "Editar Producto" : "Nuevo Producto")}
+    <main class="p-4 lg:p-6">
+      <button data-back class="flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6">
+        ${adminIcon("arrowLeft", "w-4 h-4")} Volver
+      </button>
+      <div class="bg-white rounded-xl border border-warm-200 max-w-2xl">
+        <div class="p-4 border-b border-warm-100">
+          <h2 class="font-display font-semibold text-warm-800">
+            ${isEdit ? "Editar Producto" : "Nuevo Producto"}
+          </h2>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="categoryId" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Categoría <span class="text-red-500">*</span>
-            </label>
-            <select
-              id="categoryId"
-              name="categoryId"
-              required
-              class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-            >
-              <option value="">Seleccionar categoría</option>
-              ${categories.map(c => `<option value="${c.id}" ${product?.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-            </select>
-          </div>
-
-          <div>
-            <label for="tags" class="block text-sm font-medium text-warm-700 mb-1.5">
-              Etiquetas
-            </label>
-            <input
-              type="text"
-              id="tags"
-              name="tags"
-              value="${product?.tags?.join(', ') || ''}"
-              class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-              placeholder="premium, sin-tacc (separadas por coma)"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label for="description" class="block text-sm font-medium text-warm-700 mb-1.5">
-            Descripción
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows="2"
-            class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors resize-none"
-            placeholder="Descripción breve del producto..."
-          >${product?.description || ''}</textarea>
-        </div>
-
-        <!-- Price Section -->
-        <div class="border-t border-warm-100 pt-6">
-          <h4 class="font-medium text-warm-800 mb-4">Configuración de Precios</h4>
-          
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-warm-700 mb-2">Tipo de precio</label>
-            <div class="flex flex-wrap gap-3">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="priceType" value="unit" ${initialPriceType === 'unit' ? 'checked' : ''} class="text-brand-500 focus:ring-brand-400">
-                <span class="text-sm text-warm-700">Por unidad</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="priceType" value="weight" ${initialPriceType === 'weight' ? 'checked' : ''} class="text-brand-500 focus:ring-brand-400">
-                <span class="text-sm text-warm-700">Por peso (kg)</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="priceType" value="fraction" ${initialPriceType === 'fraction' ? 'checked' : ''} class="text-brand-500 focus:ring-brand-400">
-                <span class="text-sm text-warm-700">Por fracción (horma)</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Unit Price Fields -->
-          <div id="unit-fields" class="${initialPriceType === 'unit' ? '' : 'hidden'} space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label for="unitPrice" class="block text-sm font-medium text-warm-700 mb-1.5">Precio</label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-500">$</span>
-                  <input
-                    type="number"
-                    id="unitPrice"
-                    name="unitPrice"
-                    min="0"
-                    step="1"
-                    value="${product?.prices[0]?.type === 'unit' ? product.prices[0].price : ''}"
-                    class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                  />
-                </div>
-              </div>
-              <div>
-                <label for="unitLabel" class="block text-sm font-medium text-warm-700 mb-1.5">Unidad</label>
-                <input
-                  type="text"
-                  id="unitLabel"
-                  name="unitLabel"
-                  value="${product?.prices[0]?.type === 'unit' ? product.prices[0].unitLabel : ''}"
-                  placeholder="paquete, litro, etc"
-                  class="w-full px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Weight Price Fields -->
-          <div id="weight-fields" class="${initialPriceType === 'weight' ? '' : 'hidden'} space-y-4">
+        <form id="product-form" class="p-6 space-y-4">
+          <input type="hidden" id="prod-id" value="${product?.id || ""}"/>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="pricePerKg" class="block text-sm font-medium text-warm-700 mb-1.5">Precio por kg</label>
-              <div class="relative max-w-xs">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-500">$</span>
-                <input
-                  type="number"
-                  id="pricePerKg"
-                  name="pricePerKg"
-                  min="0"
-                  step="1"
-                  value="${product?.prices[0]?.type === 'weight' ? product.prices[0].pricePerKg : ''}"
-                  class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-warm-700 mb-2">Pesos disponibles (gramos)</label>
-              <div class="flex flex-wrap gap-2">
-                ${[100, 250, 500, 1000].map(w => {
-                  const isChecked = product?.prices[0]?.type === 'weight' && product.prices[0].availableWeights?.includes(w);
-                  return `
-                    <label class="flex items-center gap-2 px-3 py-2 rounded-lg border border-warm-200 cursor-pointer hover:bg-warm-50 transition-colors">
-                      <input type="checkbox" name="weights" value="${w}" ${isChecked ? 'checked' : ''} class="text-brand-500 focus:ring-brand-400">
-                      <span class="text-sm text-warm-700">${w}g</span>
-                    </label>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          </div>
-
-          <!-- Fraction Price Fields -->
-          <div id="fraction-fields" class="${initialPriceType === 'fraction' ? '' : 'hidden'} space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label for="priceWhole" class="block text-sm font-medium text-warm-700 mb-1.5">Horma entera</label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-500">$</span>
-                  <input
-                    type="number"
-                    id="priceWhole"
-                    name="priceWhole"
-                    min="0"
-                    value="${product?.prices[0]?.type === 'fraction' ? product.prices[0].prices.whole : ''}"
-                    class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                  />
-                </div>
-              </div>
-              <div>
-                <label for="priceHalf" class="block text-sm font-medium text-warm-700 mb-1.5">1/2 horma</label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-500">$</span>
-                  <input
-                    type="number"
-                    id="priceHalf"
-                    name="priceHalf"
-                    min="0"
-                    value="${product?.prices[0]?.type === 'fraction' ? product.prices[0].prices.half : ''}"
-                    class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                  />
-                </div>
-              </div>
-              <div>
-                <label for="priceQuarter" class="block text-sm font-medium text-warm-700 mb-1.5">1/4 horma</label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-500">$</span>
-                  <input
-                    type="number"
-                    id="priceQuarter"
-                    name="priceQuarter"
-                    min="0"
-                    value="${product?.prices[0]?.type === 'fraction' ? product.prices[0].prices.quarter : ''}"
-                    class="w-full pl-8 pr-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label for="fractionLabel" class="block text-sm font-medium text-warm-700 mb-1.5">Etiqueta</label>
-              <input
-                type="text"
-                id="fractionLabel"
-                name="fractionLabel"
-                value="${product?.prices[0]?.type === 'fraction' ? product.prices[0].fractionLabel : 'horma'}"
-                placeholder="horma"
-                class="w-full max-w-xs px-4 py-2.5 rounded-lg border border-warm-300 text-warm-800 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-colors"
+              <label class="block text-sm font-medium text-warm-700 mb-1.5">Nombre *</label>
+              <input 
+                type="text" 
+                id="prod-name" 
+                required 
+                value="${product?.name || ""}" 
+                class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none"
               />
             </div>
+            <div>
+              <label class="block text-sm font-medium text-warm-700 mb-1.5">Marca *</label>
+              <select id="prod-brand" required class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none">
+                <option value="">Seleccionar</option>
+                ${brands
+                  .map(
+                    (b) => `
+                  <option value="${b.id}" ${product?.brandId === b.id ? "selected" : ""}>${b.name}</option>
+                `,
+                  )
+                  .join("")}
+              </select>
+            </div>
           </div>
-        </div>
-
-        <!-- Availability -->
-        <div class="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="isAvailable"
-            name="isAvailable"
-            ${product?.isAvailable !== false ? 'checked' : ''}
-            class="w-5 h-5 rounded border-warm-300 text-brand-500 focus:ring-brand-400"
-          />
-          <label for="isAvailable" class="text-sm font-medium text-warm-700">
-            Producto disponible
-          </label>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex items-center gap-3 pt-4 border-t border-warm-100">
-          <button
-            type="submit"
-            class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors"
-          >
-            ${createIcon('save', { size: 18 })}
-            ${isEdit ? 'Guardar Cambios' : 'Crear Producto'}
-          </button>
-          <a
-            href="#/admin/products"
-            class="px-6 py-2.5 rounded-lg text-warm-600 font-medium hover:bg-warm-100 transition-colors"
-          >
-            Cancelar
-          </a>
-        </div>
-      </form>
-    </div>
+          <div>
+            <label class="block text-sm font-medium text-warm-700 mb-1.5">Categoría *</label>
+            <select id="prod-category" required class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none">
+              <option value="">Seleccionar</option>
+              ${categories
+                .map(
+                  (c) => `
+                <option value="${c.id}" ${product?.categoryId === c.id ? "selected" : ""}>${c.name}</option>
+              `,
+                )
+                .join("")}
+            </select>
+          </div>
+          <div class="border-t border-warm-100 pt-4">
+            <label class="block text-sm font-medium text-warm-700 mb-2">Tipo de Precio</label>
+            <div class="flex flex-wrap gap-4 mb-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="priceType" value="unit" ${priceType === "unit" ? "checked" : ""} class="text-brand-500"/>
+                <span class="text-sm">Por unidad</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="priceType" value="weight" ${priceType === "weight" ? "checked" : ""} class="text-brand-500"/>
+                <span class="text-sm">Por peso (kg)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="priceType" value="fraction" ${priceType === "fraction" ? "checked" : ""} class="text-brand-500"/>
+                <span class="text-sm">Por fracción</span>
+              </label>
+            </div>
+            <div id="price-fields">
+              <div id="unit-fields" class="${priceType === "unit" ? "" : "hidden"} grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Precio</label>
+                  <input 
+                    type="number" 
+                    id="unit-price" 
+                    min="0" 
+                    value="${price?.type === "unit" ? price.price : ""}" 
+                    class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Unidad</label>
+                  <input 
+                    type="text" 
+                    id="unit-label" 
+                    value="${price?.type === "unit" ? price.unitLabel : ""}" 
+                    placeholder="litro, paquete, etc" 
+                    class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                  />
+                </div>
+              </div>
+              <div id="weight-fields" class="${priceType === "weight" ? "" : "hidden"}">
+                <label class="block text-sm font-medium text-warm-700 mb-1.5">Precio por kg</label>
+                <input 
+                  type="number" 
+                  id="weight-price" 
+                  min="0" 
+                  value="${price?.type === "weight" ? price.pricePerKg : ""}" 
+                  class="w-full max-w-xs px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                />
+              </div>
+              <div id="fraction-fields" class="${priceType === "fraction" ? "" : "hidden"} grid grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">Entera</label>
+                  <input 
+                    type="number" 
+                    id="fraction-whole" 
+                    min="0" 
+                    value="${price?.type === "fraction" ? price.prices.whole : ""}" 
+                    class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">1/2</label>
+                  <input 
+                    type="number" 
+                    id="fraction-half" 
+                    min="0" 
+                    value="${price?.type === "fraction" ? price.prices.half || "" : ""}" 
+                    class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-warm-700 mb-1.5">1/4</label>
+                  <input 
+                    type="number" 
+                    id="fraction-quarter" 
+                    min="0" 
+                    value="${price?.type === "fraction" ? price.prices.quarter || "" : ""}" 
+                    class="w-full px-4 py-2.5 rounded-lg border border-warm-300 focus:border-brand-400 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+              id="prod-available" 
+              ${product?.isAvailable !== false ? "checked" : ""} 
+              class="w-5 h-5 rounded border-warm-300 text-brand-500 focus:ring-brand-400"
+            />
+            <label for="prod-available" class="text-sm font-medium text-warm-700">Producto disponible</label>
+          </div>
+          <div class="flex gap-3 pt-4 border-t border-warm-100">
+            <button type="submit" class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
+              ${adminIcon("save", "w-4 h-4")} Guardar
+            </button>
+            <button type="button" data-cancel class="px-6 py-2.5 rounded-lg text-warm-600 font-medium hover:bg-warm-100">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
   `;
+}
 
-  // Setup form handlers
-  setTimeout(() => {
-    const form = content.querySelector('#product-form') as HTMLFormElement;
-    const priceTypeRadios = content.querySelectorAll('input[name="priceType"]');
-    const unitFields = content.querySelector('#unit-fields') as HTMLElement;
-    const weightFields = content.querySelector('#weight-fields') as HTMLElement;
-    const fractionFields = content.querySelector('#fraction-fields') as HTMLElement;
-
-    // Price type toggle
-    priceTypeRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        const type = (e.target as HTMLInputElement).value;
-        unitFields.classList.toggle('hidden', type !== 'unit');
-        weightFields.classList.toggle('hidden', type !== 'weight');
-        fractionFields.classList.toggle('hidden', type !== 'fraction');
-      });
+export function attachProductsListeners(
+  onNavigate: (page: string, id?: string) => void,
+  showToast: (message: string, type?: "success" | "error") => void,
+  render: () => void,
+): void {
+  document
+    .querySelector('[data-action="new"]')
+    ?.addEventListener("click", () => {
+      onNavigate("products", "new");
     });
 
-    // Form submission
-    form?.addEventListener('submit', (e) => {
+  document.querySelectorAll("[data-edit]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = (btn as HTMLElement).dataset.edit;
+      if (id) onNavigate("products", id);
+    });
+  });
+
+  document.querySelectorAll("[data-toggle]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = (btn as HTMLElement).dataset.toggle;
+      if (id) {
+        await toggleProductAvailability(id);
+        showToast("Disponibilidad actualizada");
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-delete]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = (btn as HTMLElement).dataset.delete;
+      if (!id) return;
+
+      if (confirm("¿Eliminar este producto?")) {
+        const success = await removeProduct(id);
+        if (success) {
+          showToast("Producto eliminado");
+          render();
+        } else {
+          showToast("Error al eliminar", "error");
+        }
+      }
+    });
+  });
+}
+
+export function attachProductFormListeners(
+  onNavigate: (page: string, id?: string) => void,
+  showToast: (message: string, type?: "success" | "error") => void,
+): void {
+  document.querySelector("[data-back]")?.addEventListener("click", () => {
+    onNavigate("products");
+  });
+
+  document.querySelector("[data-cancel]")?.addEventListener("click", () => {
+    onNavigate("products");
+  });
+
+  // Price type toggle
+  document.querySelectorAll('input[name="priceType"]').forEach((radio) => {
+    radio.addEventListener("change", (e) => {
+      const type = (e.target as HTMLInputElement).value;
+      document
+        .getElementById("unit-fields")
+        ?.classList.toggle("hidden", type !== "unit");
+      document
+        .getElementById("weight-fields")
+        ?.classList.toggle("hidden", type !== "weight");
+      document
+        .getElementById("fraction-fields")
+        ?.classList.toggle("hidden", type !== "fraction");
+    });
+  });
+
+  document
+    .getElementById("product-form")
+    ?.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(form);
-      const priceType = formData.get('priceType') as string;
-      
-      // Build price object based on type
-      let prices: ProductPrice[] = [];
-      
-      if (priceType === 'unit') {
-        const price = parseInt(formData.get('unitPrice') as string) || 0;
-        const unitLabel = formData.get('unitLabel') as string || 'unidad';
-        prices.push({ type: 'unit', price, unitLabel });
-      } else if (priceType === 'weight') {
-        const pricePerKg = parseInt(formData.get('pricePerKg') as string) || 0;
-        const weights = formData.getAll('weights').map(w => parseInt(w as string));
-        prices.push({ type: 'weight', pricePerKg, availableWeights: weights.length > 0 ? weights : undefined });
-      } else if (priceType === 'fraction') {
-        const whole = parseInt(formData.get('priceWhole') as string) || 0;
-        const half = parseInt(formData.get('priceHalf') as string) || 0;
-        const quarter = parseInt(formData.get('priceQuarter') as string) || 0;
-        const fractionLabel = formData.get('fractionLabel') as string || 'horma';
-        prices.push({ type: 'fraction', prices: { whole, half, quarter }, fractionLabel });
+      const id =
+        (document.getElementById("prod-id") as HTMLInputElement).value ||
+        undefined;
+      const name = (document.getElementById("prod-name") as HTMLInputElement)
+        .value;
+      const brandId = (
+        document.getElementById("prod-brand") as HTMLSelectElement
+      ).value;
+      const categoryId = (
+        document.getElementById("prod-category") as HTMLSelectElement
+      ).value;
+      const isAvailable = (
+        document.getElementById("prod-available") as HTMLInputElement
+      ).checked;
+
+      const priceType = (
+        document.querySelector(
+          'input[name="priceType"]:checked',
+        ) as HTMLInputElement
+      ).value;
+      let prices: Price[] = [];
+
+      if (priceType === "unit") {
+        prices = [
+          {
+            type: "unit",
+            price:
+              parseInt(
+                (document.getElementById("unit-price") as HTMLInputElement)
+                  .value,
+              ) || 0,
+            unitLabel:
+              (document.getElementById("unit-label") as HTMLInputElement)
+                .value || "unidad",
+          },
+        ];
+      } else if (priceType === "weight") {
+        prices = [
+          {
+            type: "weight",
+            pricePerKg:
+              parseInt(
+                (document.getElementById("weight-price") as HTMLInputElement)
+                  .value,
+              ) || 0,
+            availableWeights: [100, 250, 500, 1000],
+          },
+        ];
+      } else if (priceType === "fraction") {
+        prices = [
+          {
+            type: "fraction",
+            prices: {
+              whole:
+                parseInt(
+                  (
+                    document.getElementById(
+                      "fraction-whole",
+                    ) as HTMLInputElement
+                  ).value,
+                ) || 0,
+              half:
+                parseInt(
+                  (document.getElementById("fraction-half") as HTMLInputElement)
+                    .value,
+                ) || undefined,
+              quarter:
+                parseInt(
+                  (
+                    document.getElementById(
+                      "fraction-quarter",
+                    ) as HTMLInputElement
+                  ).value,
+                ) || undefined,
+            },
+            fractionLabel: "horma",
+          },
+        ];
       }
 
-      // Parse tags
-      const tagsStr = formData.get('tags') as string;
-      const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : undefined;
+      const data = { name, brandId, categoryId, prices, isAvailable };
+      const success = await saveProduct(data, id);
 
-      const data = {
-        name: formData.get('name') as string,
-        brandId: formData.get('brandId') as string,
-        categoryId: formData.get('categoryId') as string,
-        description: formData.get('description') as string || undefined,
-        prices,
-        tags,
-        isAvailable: formData.has('isAvailable'),
-      };
-
-      if (isEdit && product) {
-        adminDataActions.updateProduct(product.id, data);
+      if (success) {
+        showToast(id ? "Producto actualizado" : "Producto creado");
+        onNavigate("products");
       } else {
-        adminDataActions.createProduct(data);
+        showToast("Error al guardar", "error");
       }
-
-      router.navigate('/admin/products');
     });
-  }, 0);
-
-  return createAdminLayout(content, isEdit ? 'Editar Producto' : 'Nuevo Producto');
 }

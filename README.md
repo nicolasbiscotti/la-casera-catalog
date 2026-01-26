@@ -1,6 +1,6 @@
 # 🥩 La Casera - Catálogo de Precios
 
-Aplicación web para catálogo de precios de La Casera/almacén, con panel de administración seguro.
+Aplicación web para catálogo de precios de fiambrería/almacén, con panel de administración seguro.
 
 ## 📋 Características
 
@@ -22,12 +22,13 @@ Aplicación web para catálogo de precios de La Casera/almacén, con panel de ad
 - ✅ CRUD de marcas
 - ✅ CRUD de productos con precios múltiples
 - ✅ Historial de cambios de precios
+- ✅ Exportar catálogo a PDF
 - 🔜 Actualización masiva de precios (CSV)
 - 🔜 Métricas avanzadas
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend**: Vite 7 + TypeScript + Tailwind CSS v4
+- **Frontend**: Vite + TypeScript + Tailwind CSS v4
 - **Base de Datos**: Firestore
 - **Autenticación**: Firebase Auth
 - **Hosting**: Vercel (frontend) + Firebase (backend)
@@ -36,16 +37,18 @@ Aplicación web para catálogo de precios de La Casera/almacén, con panel de ad
 
 ### Prerrequisitos
 
-- Node.js 20+
-- pnpm (`npm install -g pnpm`)
-- Firebase CLI (`npm install -g firebase-tools`)
+```bash
+node --version    # v22.x required
+pnpm --version    # v10.x required
+firebase --version # v15.x required
+```
 
 ### Instalación
 
 ```bash
 # Clonar repositorio
-git clone <repository-url>
-cd la-casera-catalogo
+git clone https://github.com/nicolasbiscotti/la-casera-catalog.git
+cd la-casera-catalog
 
 # Instalar dependencias
 pnpm install
@@ -57,21 +60,33 @@ cp .env.example .env.local
 ### Desarrollo Local
 
 ```bash
-# Iniciar servidor de desarrollo
-pnpm dev
+# Opción recomendada: iniciar emuladores y dev server juntos
+pnpm dev:emulators
 
-# En otra terminal, iniciar emuladores de Firebase (opcional)
-pnpm firebase:emulators
+# O por separado:
+pnpm firebase:emulators  # Terminal 1
+pnpm dev                 # Terminal 2
 ```
 
 La aplicación estará disponible en `http://localhost:3000`
 
-**Acceso al Panel Admin:**
+**URLs de desarrollo:**
 
-- URL: `http://localhost:3000/#/admin/login`
-- Credenciales demo:
-  - Admin: `admin@lacasera.com` / `admin123`
-  - Editor: `editor@lacasera.com` / `editor123`
+- App: http://localhost:3000
+- Admin: http://localhost:3000/#/admin
+- Emulator UI: http://localhost:4000
+
+**Credenciales demo:**
+
+- Admin: `admin@lacasera.com` / `admin123`
+- Editor: `editor@lacasera.com` / `editor123`
+
+### Sembrar Datos de Prueba
+
+```bash
+# Con emuladores corriendo
+pnpm seed:local
+```
 
 ### Build de Producción
 
@@ -83,103 +98,78 @@ pnpm preview
 ## 📁 Estructura del Proyecto
 
 ```
-la-casera-catalogo/
+la-casera-catalog/
 ├── src/
-│   ├── components/       # Componentes UI
-│   │   ├── Header.ts
-│   │   ├── SearchBar.ts
-│   │   ├── Catalog.ts
-│   │   ├── CategoryAccordion.ts
-│   │   ├── ProductCard.ts
-│   │   ├── SearchResults.ts
-│   │   ├── Footer.ts
-│   │   └── icons.ts
-│   ├── services/         # Servicios y datos
-│   │   ├── firebase.config.ts
-│   │   └── mockData.ts
+│   ├── admin/            # Panel de administración
+│   │   ├── components/   # AdminLayout, DataTable, icons
+│   │   ├── pages/        # Login, Dashboard, CRUD pages
+│   │   └── store/        # authStore, adminDataStore
+│   ├── components/       # Componentes públicos
+│   ├── services/         # Firebase config
 │   ├── store/            # Estado global
-│   │   └── catalogStore.ts
 │   ├── types/            # Tipos TypeScript
-│   │   └── index.ts
 │   ├── utils/            # Utilidades
-│   │   ├── priceUtils.ts
-│   │   └── debounce.ts
+│   ├── router/           # Enrutamiento SPA
 │   ├── styles/           # Estilos CSS
-│   │   └── main.css
 │   └── main.ts           # Entry point
+├── scripts/              # Scripts de desarrollo
+├── docs/                 # Documentación
 ├── public/               # Assets estáticos
-├── firebase.json         # Config Firebase
+├── .github/workflows/    # CI/CD
+├── firebase.json         # Config emuladores
 ├── firestore.rules       # Reglas de seguridad
-└── firestore.indexes.json
+├── vercel.json           # Config Vercel
+└── package.json
 ```
 
-## 🔧 Configuración
+## 📖 Documentación
 
-### Variables de Entorno
+- **[Quick Start](./docs/QUICKSTART.md)** - Guía rápida para desarrollo local
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Setup completo de Firebase + Vercel
 
-| Variable                            | Descripción                                |
-| ----------------------------------- | ------------------------------------------ |
-| `VITE_FIREBASE_API_KEY`             | API Key de Firebase                        |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | Dominio de autenticación                   |
-| `VITE_FIREBASE_PROJECT_ID`          | ID del proyecto Firebase                   |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | Bucket de storage                          |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | ID del sender                              |
-| `VITE_FIREBASE_APP_ID`              | ID de la aplicación                        |
-| `VITE_ENVIRONMENT`                  | `development` \| `staging` \| `production` |
-| `VITE_USE_FIREBASE_EMULATORS`       | `true` \| `false`                          |
-| `VITE_STORE_NAME`                   | Nombre de la tienda                        |
-| `VITE_STORE_WHATSAPP`               | Número de WhatsApp                         |
+## 🔧 Scripts Disponibles
 
-### Separación de Datos por Entorno
+| Comando                      | Descripción              |
+| ---------------------------- | ------------------------ |
+| `pnpm dev`                   | Servidor de desarrollo   |
+| `pnpm dev:emulators`         | Emuladores + dev server  |
+| `pnpm build`                 | Build de producción      |
+| `pnpm preview`               | Preview del build        |
+| `pnpm lint`                  | Ejecutar ESLint          |
+| `pnpm type-check`            | Verificar tipos          |
+| `pnpm test`                  | Ejecutar tests (watch)   |
+| `pnpm test:run`              | Ejecutar tests (una vez) |
+| `pnpm firebase:emulators`    | Iniciar emuladores       |
+| `pnpm firebase:deploy:rules` | Desplegar reglas         |
+| `pnpm seed:local`            | Sembrar datos de prueba  |
 
-Los datos se almacenan en colecciones separadas según el entorno:
+## 🌍 Entornos
 
-- **Production**: `/categories`, `/products`, etc.
-- **Development**: `/environments/development/categories`, etc.
-- **Staging**: `/environments/staging/categories`, etc.
+| Entorno     | Branch    | Vercel     | Firestore                     |
+| ----------- | --------- | ---------- | ----------------------------- |
+| Production  | `main`    | Production | `/` (root)                    |
+| Staging     | `staging` | Preview    | `/environments/staging/*`     |
+| Development | `develop` | Preview    | `/environments/development/*` |
+| Local       | -         | -          | Emulators                     |
 
 ## 📦 Modelo de Datos
 
-### Category (Rubro)
+### Category
 
 ```typescript
-{
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  iconName?: string;
-  isActive: boolean;
-  sortOrder: number;
-}
+{ id, name, slug, description?, iconName?, isActive, sortOrder }
 ```
 
-### Brand (Marca)
+### Brand
 
 ```typescript
-{
-  id: string;
-  name: string;
-  description?: string;
-  logoUrl?: string;
-  isActive: boolean;
-  sortOrder: number;
-}
+{ id, name, description?, logoUrl?, isActive, sortOrder }
 ```
 
 ### Product
 
 ```typescript
-{
-  id: string;
-  name: string;
-  brandId: string;
-  categoryId: string;
-  description?: string;
-  prices: ProductPrice[];  // Múltiples tipos de precio
-  isAvailable: boolean;
-  tags?: string[];
-}
+{ id, name, brandId, categoryId, description?, prices[], isAvailable, tags?[] }
 ```
 
 ### Sistema de Precios
@@ -195,34 +185,6 @@ Los datos se almacenan en colecciones separadas según el entorno:
 { type: 'fraction', prices: { whole: 25000, half: 13000, quarter: 7000 }, fractionLabel: 'horma' }
 ```
 
-## 🚀 Deployment
-
-### Vercel
-
-1. Conectar repositorio a Vercel
-2. Configurar variables de entorno para cada environment
-3. Deploy automático con cada push
-
-### CI/CD Workflows
-
-Ver `.github/workflows/` para configuraciones de CI/CD.
-
-## 👥 Agregar Usuarios Admin
-
-Los usuarios admin se gestionan a través de Firebase Console o Cloud Functions.
-
-```javascript
-// Ejemplo: agregar admin via Firebase Admin SDK
-await db.collection("adminUsers").doc(userId).set({
-  email: "admin@example.com",
-  role: "admin",
-  isActive: true,
-  createdAt: new Date(),
-});
-```
-
 ## 📄 Licencia
 
 MIT
-
----

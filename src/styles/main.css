@@ -1,12 +1,8 @@
 @import "tailwindcss";
 
-/* ============================================================
-   THEME CONFIGURATION - Tailwind CSS v4
-   Using CSS-based configuration instead of JS config
-   ============================================================ */
-
+/* Custom Theme for La Casera */
 @theme {
-  /* Brand colors - warm deli aesthetic */
+  /* Brand Colors - Warm Orange */
   --color-brand-50: #fef7ee;
   --color-brand-100: #fdecd3;
   --color-brand-200: #fad5a5;
@@ -19,7 +15,7 @@
   --color-brand-900: #772e10;
   --color-brand-950: #401506;
 
-  /* Warm neutral tones */
+  /* Warm Neutrals */
   --color-warm-50: #faf9f7;
   --color-warm-100: #f3f1ed;
   --color-warm-200: #e5e1d8;
@@ -32,392 +28,112 @@
   --color-warm-900: #594f45;
   --color-warm-950: #2f2924;
 
-  /* Font families */
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-body: "Source Sans 3", system-ui, sans-serif;
+  /* Typography */
+  --font-family-display: "Playfair Display", Georgia, serif;
+  --font-family-body: "Source Sans 3", system-ui, sans-serif;
+}
 
-  /* Custom animations */
-  --animate-fade-in: fade-in 0.3s ease-out;
-  --animate-slide-up: slide-up 0.4s ease-out;
-  --animate-slide-down: slide-down 0.3s ease-out;
-  --animate-pulse-soft: pulse-soft 2s infinite;
+/* Base Styles */
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-warm-50);
+  color: var(--color-warm-900);
+}
 
-  @keyframes fade-in {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-display);
+}
+
+/* Glass Effect */
+.glass {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
-
-  @keyframes slide-up {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-down {
-    0% {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes pulse-soft {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
+  to {
+    opacity: 1;
   }
 }
 
-/* ============================================================
-   BASE STYLES
-   ============================================================ */
-
-@layer base {
-  * {
-    box-sizing: border-box;
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    font-family: var(--font-body);
-    color: var(--color-warm-900);
-    background-color: var(--color-warm-50);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-display);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* ============================================================
-   COMPONENT STYLES
-   ============================================================ */
-
-@layer components {
-  /* Search input styling */
-  .search-input {
-    width: 100%;
-    padding: 0.75rem 1rem 0.75rem 3rem;
-    background-color: white;
-    border: 2px solid var(--color-warm-200);
-    border-radius: 0.75rem;
-    color: var(--color-warm-800);
-    transition: all 0.2s;
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
   }
-
-  .search-input::placeholder {
-    color: var(--color-warm-400);
-  }
-
-  .search-input:focus {
-    outline: none;
-    border-color: var(--color-brand-400);
-    box-shadow: 0 0 0 2px var(--color-brand-100);
-  }
-
-  /* Category accordion styling */
-  .category-item {
-    background-color: white;
-    border-radius: 0.75rem;
-    border: 1px solid var(--color-warm-200);
-    overflow: hidden;
-    transition: all 0.3s;
-  }
-
-  .category-item:hover {
-    border-color: var(--color-brand-300);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  }
-
-  .category-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.2s;
-  }
-
-  .category-header:hover {
-    background-color: var(--color-warm-50);
-  }
-
-  .category-content {
-    border-top: 1px solid var(--color-warm-100);
-  }
-
-  /* Product card styling */
-  .product-card {
-    background: linear-gradient(to bottom right, white, var(--color-warm-50));
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-warm-100);
-    transition: all 0.2s;
-  }
-
-  .product-card:hover {
-    border-color: var(--color-brand-200);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  }
-
-  /* Price tag styling */
-  .price-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.5rem;
-    background-color: var(--color-brand-50);
-    color: var(--color-brand-700);
-    font-weight: 600;
-    font-size: 0.875rem;
-  }
-
-  .price-tag-unit {
-    font-size: 0.75rem;
-    font-weight: 400;
-    color: var(--color-brand-500);
-  }
-
-  /* Button styling */
-  .btn-primary {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
-    background-color: var(--color-brand-500);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    transition: all 0.2s;
-  }
-
-  .btn-primary:hover {
-    background-color: var(--color-brand-600);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  }
-
-  .btn-primary:active {
-    background-color: var(--color-brand-700);
-  }
-
-  .btn-primary:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--color-brand-300);
-  }
-
-  .btn-secondary {
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    background-color: var(--color-warm-100);
-    color: var(--color-warm-700);
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .btn-secondary:hover {
-    background-color: var(--color-warm-200);
-  }
-
-  .btn-secondary:active {
-    background-color: var(--color-warm-300);
-  }
-
-  .btn-secondary:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--color-warm-300);
-  }
-
-  .btn-whatsapp {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    background-color: #22c55e;
-    color: white;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .btn-whatsapp:hover {
-    background-color: #16a34a;
-  }
-
-  .btn-whatsapp:active {
-    background-color: #15803d;
-  }
-
-  /* Skeleton loading */
-  .skeleton {
-    animation: var(--animate-pulse-soft);
-    background-color: var(--color-warm-200);
-    border-radius: 0.25rem;
-  }
-
-  /* Badge styling */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .badge-category {
-    background-color: var(--color-warm-200);
-    color: var(--color-warm-700);
-  }
-
-  .badge-brand {
-    background-color: var(--color-brand-100);
-    color: var(--color-brand-700);
+  50% {
+    opacity: 0.7;
   }
 }
 
-/* ============================================================
-   UTILITY STYLES
-   ============================================================ */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
 
-@layer utilities {
-  /* Custom scrollbar */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-warm-300) transparent;
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 1.5s ease-in-out infinite;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-warm-200) 0%,
+    var(--color-warm-100) 50%,
+    var(--color-warm-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
   }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: var(--color-warm-300);
-    border-radius: 3px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-warm-400);
-  }
-
-  /* Text utilities */
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Backdrop blur support */
-  .glass {
-    background-color: rgb(255 255 255 / 0.8);
-    backdrop-filter: blur(12px);
-  }
-
-  /* Line clamp */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Truncate text */
-  .truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Spin animation for loaders */
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+  100% {
+    background-position: -200% 0;
   }
 }
 
-/* ============================================================
-   ADMIN PANEL SPECIFIC STYLES
-   ============================================================ */
-
-/* Admin form inputs */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-textarea,
-select {
-  font-family: var(--font-body);
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Checkbox styling */
-input[type="checkbox"] {
-  accent-color: var(--color-brand-500);
+::-webkit-scrollbar-track {
+  background: var(--color-warm-100);
 }
 
-/* Radio button styling */
-input[type="radio"] {
-  accent-color: var(--color-brand-500);
+::-webkit-scrollbar-thumb {
+  background: var(--color-warm-400);
+  border-radius: 4px;
 }
 
-/* Admin table styles */
-table {
-  border-collapse: collapse;
-}
-
-th {
-  text-align: left;
-}
-
-/* Admin sidebar active link indicator */
-.admin-nav-active {
-  position: relative;
-}
-
-.admin-nav-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 24px;
-  background-color: var(--color-brand-500);
-  border-radius: 0 2px 2px 0;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-warm-500);
 }
