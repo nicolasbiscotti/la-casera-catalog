@@ -131,17 +131,18 @@ export function renderToast(
 // Attach layout event listeners
 export function attachLayoutListeners(
   onNavigate: (page: string) => void,
+  onSidebarToggle?: () => void,
 ): void {
   // Menu toggle
   document.getElementById("menu-toggle")?.addEventListener("click", () => {
     toggleSidebar();
-    // Re-render needed - handled by parent
+    onSidebarToggle?.();
   });
 
   // Sidebar overlay close
   document.getElementById("sidebar-overlay")?.addEventListener("click", () => {
     closeSidebar();
-    // Re-render needed - handled by parent
+    onSidebarToggle?.();
   });
 
   // Logout button
