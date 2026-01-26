@@ -1,8 +1,8 @@
-name: Deploy La Casera to development Vercel
+name: Deploy La Casera to preview Vercel
 
 on:
   push:
-    branches: [ development ]
+    branches: [ preview ]
   
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -12,7 +12,7 @@ env:
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
-  deploy-development:
+  deploy-preview:
     runs-on: ubuntu-latest
     
     steps:
@@ -43,7 +43,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
 
-          VITE_ENVIRONMENT: ${{ secrets.VITE_DEV_ENVIRONMENT }}
+          VITE_ENVIRONMENT: ${{ secrets.VITE_PREVIEW_ENVIRONMENT }}
           
           VITE_USE_FIREBASE_EMULATORS: ${{ secrets.VITE_USE_FIREBASE_EMULATORS }}
           VITE_STORE_NAME: ${{ secrets.VITE_STORE_NAME }}
@@ -53,7 +53,7 @@ jobs:
         run: pnpm add -g vercel@latest
 
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=development --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
