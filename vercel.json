@@ -4,5 +4,4 @@
   "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "vite"
-  
 }
