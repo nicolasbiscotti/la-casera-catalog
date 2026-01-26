@@ -57,12 +57,7 @@ export function renderLoginPage(): string {
             >
               ${isLoading ? `${adminIcon("loader", "w-5 h-5")} Iniciando...` : "Iniciar Sesión"}
             </button>
-          </form>
-          <div class="mt-6 p-4 bg-warm-50 rounded-xl">
-            <p class="text-xs text-warm-500 mb-2">Credenciales de prueba:</p>
-            <p class="text-xs text-warm-600"><strong>Admin:</strong> admin@lacasera.com / admin123</p>
-            <p class="text-xs text-warm-600"><strong>Editor:</strong> editor@lacasera.com / editor123</p>
-          </div>
+          </form>          
         </div>
         <p class="text-center mt-6 text-sm text-warm-500">
           <a href="#/" class="text-brand-600 hover:underline">← Volver al catálogo público</a>
