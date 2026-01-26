@@ -179,8 +179,8 @@ function render(): void {
     </div>
   `;
 
-  // Attach event listeners
-  attachLayoutListeners(navigate);
+  // Attach event listeners (pass render for sidebar toggle)
+  attachLayoutListeners(navigate, render);
   attachPageListeners();
 }
 
