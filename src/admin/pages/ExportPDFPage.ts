@@ -125,7 +125,7 @@ async function generatePDF(options: {
       ? products
       : products.filter((p) => p.isAvailable),
     generatedAt: new Date(),
-    storeName: "La Casera",
+    storeName: import.meta.env.VITE_STORE_NAME,
   };
 
   // Colors

@@ -1,6 +1,8 @@
 import { adminIcon } from "../components/icons";
 import { login, getAuthState } from "../store/authStore";
 
+const STORE_NAME = import.meta.env.VITE_STORE_NAME;
+
 export function renderLoginPage(): string {
   const { isLoading, error } = getAuthState();
 
@@ -11,7 +13,7 @@ export function renderLoginPage(): string {
           <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
             ${adminIcon("store", "w-8 h-8 text-white")}
           </div>
-          <h1 class="text-2xl font-bold text-warm-800 font-display">La Casera</h1>
+          <h1 class="text-2xl font-bold text-warm-800 font-display">${STORE_NAME}</h1>
           <p class="text-warm-500">Panel de Administración</p>
         </div>
         <div class="bg-white rounded-2xl shadow-xl p-8">

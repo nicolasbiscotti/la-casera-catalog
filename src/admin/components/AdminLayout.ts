@@ -16,6 +16,8 @@ const navItems: NavItem[] = [
   { page: "export", label: "Exportar PDF", icon: "download" },
 ];
 
+const STORE_NAME = import.meta.env.VITE_STORE_NAME;
+
 // Sidebar state
 let sidebarOpen = false;
 
@@ -45,7 +47,7 @@ export function renderSidebar(currentPage: string): string {
               ${adminIcon("store", "w-5 h-5 text-white")}
             </div>
             <div>
-              <h1 class="font-display font-bold text-white">La Casera</h1>
+              <h1 class="font-display font-bold text-white">${STORE_NAME}</h1>
               <p class="text-xs text-warm-400">Admin Panel</p>
             </div>
           </div>

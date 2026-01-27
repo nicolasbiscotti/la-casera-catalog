@@ -1,5 +1,7 @@
 import { icon } from "./icons";
 
+const STORE_NAME = import.meta.env.VITE_STORE_NAME;
+
 export function renderHeader(): string {
   const today = new Date();
 
@@ -12,7 +14,7 @@ export function renderHeader(): string {
               ${icon("store", "w-5 h-5 sm:w-6 sm:h-6 text-white")}
             </div>
             <div>
-              <h1 class="text-xl sm:text-2xl font-bold text-warm-900 font-display">La Casera</h1>
+              <h1 class="text-xl sm:text-2xl font-bold text-warm-900 font-display">${STORE_NAME}</h1>
               <p class="text-xs sm:text-sm text-warm-500">Fiambrería y Almacén</p>
             </div>
           </div>
