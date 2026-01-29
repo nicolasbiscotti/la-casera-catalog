@@ -413,7 +413,7 @@ async function generatePDF(options: {
 
 // Render the Export PDF page
 export function renderExportPage(
-  _showToast: (message: string, type?: "success" | "error") => void,
+  showToast: (message: string, type?: "success" | "error") => void,
 ): string {
   const stats = getExportStats();
 
