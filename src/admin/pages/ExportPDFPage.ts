@@ -125,16 +125,18 @@ async function generatePDF(options: {
       ? products
       : products.filter((p) => p.isAvailable),
     generatedAt: new Date(),
-    storeName: import.meta.env.VITE_STORE_NAME,
+    storeName: "La Casera",
   };
 
-  // Colors
+  // Colors - La Casera Logo palette
   const colors = {
-    primary: [238, 117, 18] as [number, number, number],
-    dark: [89, 79, 69] as [number, number, number],
-    medium: [132, 116, 98] as [number, number, number],
-    light: [213, 204, 190] as [number, number, number],
-    bg: [250, 249, 247] as [number, number, number],
+    primary: [232, 119, 34] as [number, number, number], // #E87722 - Orange
+    secondary: [30, 75, 156] as [number, number, number], // #1E4B9C - Blue
+    accent: [227, 30, 38] as [number, number, number], // #E31E26 - Red
+    dark: [26, 26, 26] as [number, number, number], // #1A1A1A - Black (text)
+    medium: [82, 82, 82] as [number, number, number], // #525252 - Gray
+    light: [212, 212, 212] as [number, number, number], // #D4D4D4 - Light gray
+    bg: [248, 248, 248] as [number, number, number], // #F8F8F8 - Background
   };
 
   let yPos = 20;
@@ -155,7 +157,8 @@ async function generatePDF(options: {
     doc.setFillColor(...colors.primary);
     doc.rect(0, 0, pageWidth, 12, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
     doc.text(data.storeName + " - Catálogo de Precios", margin, 8);
     doc.text(
       `Actualizado: ${data.generatedAt.toLocaleDateString("es-AR")}`,
@@ -168,8 +171,8 @@ async function generatePDF(options: {
 
   function addFooter(): void {
     const pageCount = doc.internal.getNumberOfPages();
-    doc.setFontSize(8);
-    doc.setTextColor(...colors.medium);
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.dark);
 
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -205,13 +208,13 @@ async function generatePDF(options: {
   doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, "F");
 
   doc.setTextColor(...colors.dark);
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("Resumen del Catálogo", margin + 10, yPos + 12);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(...colors.medium);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...colors.dark);
   doc.text(`• ${data.categories.length} categorías`, margin + 10, yPos + 22);
   doc.text(`• ${data.brands.length} marcas`, margin + 70, yPos + 22);
   doc.text(`• ${data.products.length} productos`, margin + 120, yPos + 22);
@@ -243,20 +246,19 @@ async function generatePDF(options: {
 
       // Category header
       doc.setFillColor(...colors.primary);
-      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, "F");
+      doc.roundedRect(margin, yPos, contentWidth, 12, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
+      doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text(category.name.toUpperCase(), margin + 5, yPos + 7);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
+      doc.text(category.name.toUpperCase(), margin + 5, yPos + 8);
+      doc.setFontSize(10);
       doc.text(
         `${categoryProducts.length} productos`,
         pageWidth - margin - 5,
-        yPos + 7,
+        yPos + 8,
         { align: "right" },
       );
-      yPos += 15;
+      yPos += 18;
 
       // Group products by brand within category
       const brandIds = [...new Set(categoryProducts.map((p) => p.brandId))];
@@ -272,17 +274,17 @@ async function generatePDF(options: {
         checkNewPage(20);
 
         // Brand subheader
-        doc.setFillColor(...colors.bg);
-        doc.rect(margin, yPos, contentWidth, 8, "F");
-        doc.setTextColor(...colors.primary);
-        doc.setFontSize(10);
+        doc.setFillColor(...colors.secondary);
+        doc.rect(margin, yPos, contentWidth, 9, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
-        doc.text(brand.name, margin + 3, yPos + 5.5);
-        yPos += 12;
+        doc.text(brand.name, margin + 3, yPos + 6.5);
+        yPos += 14;
 
         // Products table
         for (const product of brandProducts) {
-          checkNewPage(12);
+          checkNewPage(14);
 
           const rowIndex = brandProducts.indexOf(product);
           if (rowIndex % 2 === 0) {
@@ -290,29 +292,32 @@ async function generatePDF(options: {
           } else {
             doc.setFillColor(...colors.bg);
           }
-          doc.rect(margin, yPos - 1, contentWidth, 10, "F");
+          doc.rect(margin, yPos - 1, contentWidth, 12, "F");
 
+          // Product name - BLACK and BOLD
           doc.setTextColor(...colors.dark);
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
 
           let productName = product.name;
           if (!product.isAvailable) {
             productName += " (Sin stock)";
             doc.setTextColor(...colors.medium);
           }
-          doc.text(productName, margin + 3, yPos + 5, { maxWidth: 80 });
+          doc.text(productName, margin + 3, yPos + 6, { maxWidth: 85 });
 
-          doc.setTextColor(...colors.primary);
+          // Price - BLACK and BOLD
+          doc.setTextColor(...colors.dark);
+          doc.setFontSize(11);
           doc.setFont("helvetica", "bold");
           const priceText = product.prices[0]
             ? formatPriceForPDF(product.prices[0])
             : "-";
-          doc.text(priceText, pageWidth - margin - 3, yPos + 5, {
+          doc.text(priceText, pageWidth - margin - 3, yPos + 6, {
             align: "right",
           });
 
-          yPos += 10;
+          yPos += 12;
         }
 
         yPos += 5;
@@ -330,24 +335,23 @@ async function generatePDF(options: {
 
       // Brand header
       doc.setFillColor(...colors.primary);
-      doc.roundedRect(margin, yPos, contentWidth, 10, 2, 2, "F");
+      doc.roundedRect(margin, yPos, contentWidth, 12, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
+      doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text(brand.name.toUpperCase(), margin + 5, yPos + 7);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
+      doc.text(brand.name.toUpperCase(), margin + 5, yPos + 8);
+      doc.setFontSize(10);
       doc.text(
         `${brandProducts.length} productos`,
         pageWidth - margin - 5,
-        yPos + 7,
+        yPos + 8,
         { align: "right" },
       );
-      yPos += 15;
+      yPos += 18;
 
       // Products table
       for (const product of brandProducts) {
-        checkNewPage(12);
+        checkNewPage(14);
 
         const category = data.categories.find(
           (c) => c.id === product.categoryId,
@@ -359,34 +363,38 @@ async function generatePDF(options: {
         } else {
           doc.setFillColor(...colors.bg);
         }
-        doc.rect(margin, yPos - 1, contentWidth, 10, "F");
+        doc.rect(margin, yPos - 1, contentWidth, 12, "F");
 
+        // Product name - BLACK and BOLD
         doc.setTextColor(...colors.dark);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
 
         let productName = product.name;
         if (!product.isAvailable) {
           productName += " (Sin stock)";
           doc.setTextColor(...colors.medium);
         }
-        doc.text(productName, margin + 3, yPos + 5, { maxWidth: 70 });
+        doc.text(productName, margin + 3, yPos + 6, { maxWidth: 70 });
 
-        doc.setTextColor(...colors.medium);
-        doc.setFontSize(7);
-        doc.text(category?.name || "", margin + 75, yPos + 5);
-
-        doc.setTextColor(...colors.primary);
+        // Category badge
+        doc.setTextColor(...colors.secondary);
         doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text(category?.name || "", margin + 78, yPos + 6);
+
+        // Price - BLACK and BOLD
+        doc.setTextColor(...colors.dark);
+        doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
         const priceText = product.prices[0]
           ? formatPriceForPDF(product.prices[0])
           : "-";
-        doc.text(priceText, pageWidth - margin - 3, yPos + 5, {
+        doc.text(priceText, pageWidth - margin - 3, yPos + 6, {
           align: "right",
         });
 
-        yPos += 10;
+        yPos += 12;
       }
 
       yPos += 10;

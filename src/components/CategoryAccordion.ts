@@ -12,22 +12,22 @@ function renderBrandSection(brand: Brand, products: Product[]): string {
   const isExpanded = isBrandExpanded(brand.id);
 
   return `
-    <div class="border-b border-warm-50 last:border-b-0">
+    <div class="border-b border-warm-200 last:border-b-0">
       <button 
-        class="brand-header w-full flex items-center justify-between px-4 py-3 bg-warm-50 hover:bg-warm-100 transition-colors"
+        class="brand-header w-full flex items-center justify-between px-4 py-3 bg-warm-100 hover:bg-warm-200 transition-colors"
         data-brand="${brand.id}"
         aria-expanded="${isExpanded}"
       >
         <div class="flex items-center gap-2">
-          <span class="w-4 h-4 text-warm-400 transition-transform ${isExpanded ? "rotate-90" : ""}">
-            ${icon("chevronRight", "w-4 h-4")}
+          <span class="w-5 h-5 text-warm-600 transition-transform ${isExpanded ? "rotate-90" : ""}">
+            ${icon("chevronRight", "w-5 h-5")}
           </span>
-          <span class="font-medium text-warm-700">${brand.name}</span>
-          <span class="text-xs text-warm-400">(${products.length})</span>
+          <span class="text-base font-bold text-warm-900">${brand.name}</span>
+          <span class="text-sm font-medium text-warm-600">(${products.length})</span>
         </div>
       </button>
-      <div class="brand-content p-4 ${isExpanded ? "" : "hidden"}">
-        <div class="grid gap-3 sm:grid-cols-2">
+      <div class="brand-content p-4 bg-warm-50 ${isExpanded ? "" : "hidden"}">
+        <div class="grid gap-4 sm:grid-cols-2">
           ${products.map((p) => renderProductCard(p)).join("")}
         </div>
       </div>
@@ -45,26 +45,26 @@ export function renderCategoryAccordion(category: Category): string {
   }
 
   return `
-    <div class="bg-white rounded-xl border border-warm-200 overflow-hidden shadow-sm animate-slide-up">
+    <div class="bg-white rounded-xl border-2 border-warm-300 overflow-hidden shadow-sm animate-slide-up">
       <button 
-        class="category-header w-full flex items-center justify-between px-4 py-4 hover:bg-warm-50 transition-colors"
+        class="category-header w-full flex items-center justify-between px-4 py-4 hover:bg-brand-50 transition-colors"
         data-category="${category.id}"
         aria-expanded="${isExpanded}"
       >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600">
+          <div class="w-12 h-12 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600 border border-brand-200">
             ${getCategoryIcon(category.iconName)}
           </div>
           <div class="text-left">
-            <h3 class="font-display font-semibold text-warm-800">${category.name}</h3>
-            <p class="text-xs text-warm-500">${categoryProducts.length} productos</p>
+            <h3 class="text-xl font-bold text-warm-900">${category.name}</h3>
+            <p class="text-sm font-medium text-warm-600">${categoryProducts.length} productos</p>
           </div>
         </div>
-        <span class="w-5 h-5 text-warm-400 transition-transform ${isExpanded ? "rotate-180" : ""}">
-          ${icon("chevronDown", "w-5 h-5")}
+        <span class="w-6 h-6 text-warm-600 transition-transform ${isExpanded ? "rotate-180" : ""}">
+          ${icon("chevronDown", "w-6 h-6")}
         </span>
       </button>
-      <div class="category-content border-t border-warm-100 ${isExpanded ? "" : "hidden"}">
+      <div class="category-content border-t-2 border-warm-200 ${isExpanded ? "" : "hidden"}">
         ${categoryBrands
           .map((brand) => {
             const brandProducts = categoryProducts.filter(

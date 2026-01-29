@@ -1,43 +1,77 @@
 @import "tailwindcss";
 
-/* Custom Theme for La Casera */
+/* 
+ * Custom Theme for La Casera
+ * Colors extracted from logo:
+ * - Orange: #E87722 (primary brand color)
+ * - Blue: #1E4B9C (secondary/accent)
+ * - Red: #E31E26 (accent for alerts)
+ * - Black: #1A1A1A (text, high contrast)
+ * - White: #FFFFFF (backgrounds)
+ */
 @theme {
-  /* Brand Colors - Warm Orange */
-  --color-brand-50: #fef7ee;
-  --color-brand-100: #fdecd3;
-  --color-brand-200: #fad5a5;
-  --color-brand-300: #f6b86d;
-  --color-brand-400: #f19132;
-  --color-brand-500: #ee7512;
-  --color-brand-600: #df5a08;
-  --color-brand-700: #b94309;
-  --color-brand-800: #93350f;
-  --color-brand-900: #772e10;
-  --color-brand-950: #401506;
+  /* Brand Colors - La Casera Orange */
+  --color-brand-50: #fef8f3;
+  --color-brand-100: #fee8d6;
+  --color-brand-200: #fcd0ad;
+  --color-brand-300: #f9b077;
+  --color-brand-400: #f28c42;
+  --color-brand-500: #e87722; /* Logo orange */
+  --color-brand-600: #d45f10;
+  --color-brand-700: #b04810;
+  --color-brand-800: #8d3a14;
+  --color-brand-900: #733214;
+  --color-brand-950: #3e1707;
 
-  /* Warm Neutrals */
-  --color-warm-50: #faf9f7;
-  --color-warm-100: #f3f1ed;
-  --color-warm-200: #e5e1d8;
-  --color-warm-300: #d3ccbe;
-  --color-warm-400: #bdb3a0;
-  --color-warm-500: #ac9d87;
-  --color-warm-600: #9f8d77;
-  --color-warm-700: #847462;
-  --color-warm-800: #6c5f53;
-  --color-warm-900: #594f45;
-  --color-warm-950: #2f2924;
+  /* Secondary Colors - La Casera Blue */
+  --color-secondary-50: #f0f5fb;
+  --color-secondary-100: #dce8f5;
+  --color-secondary-200: #c0d5ed;
+  --color-secondary-300: #94b9e1;
+  --color-secondary-400: #6194d1;
+  --color-secondary-500: #3d72be;
+  --color-secondary-600: #1e4b9c; /* Logo blue */
+  --color-secondary-700: #1a4085;
+  --color-secondary-800: #1a376d;
+  --color-secondary-900: #1b305b;
+  --color-secondary-950: #121f3d;
 
-  /* Typography */
-  --font-family-display: "Playfair Display", Georgia, serif;
-  --font-family-body: "Source Sans 3", system-ui, sans-serif;
+  /* Accent Red - For alerts/warnings */
+  --color-accent-500: #e31e26; /* Logo red */
+  --color-accent-600: #c91a21;
+
+  /* Neutral Colors - High Contrast for accessibility */
+  --color-warm-50: #ffffff;
+  --color-warm-100: #f8f8f8;
+  --color-warm-200: #e8e8e8;
+  --color-warm-300: #d4d4d4;
+  --color-warm-400: #a3a3a3;
+  --color-warm-500: #737373;
+  --color-warm-600: #525252;
+  --color-warm-700: #404040;
+  --color-warm-800: #262626;
+  --color-warm-900: #1a1a1a; /* Logo black - main text */
+  --color-warm-950: #0a0a0a;
+
+  /* Typography - More readable fonts */
+  --font-family-display: "Source Sans 3", "Arial Black", Arial, sans-serif;
+  --font-family-body: "Source Sans 3", Arial, system-ui, sans-serif;
 }
 
-/* Base Styles */
+/* Base Styles - High Contrast */
 body {
   font-family: var(--font-family-body);
   background-color: var(--color-warm-50);
   color: var(--color-warm-900);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Ensure minimum font size for accessibility */
+@media (max-width: 640px) {
+  body {
+    font-size: 18px;
+  }
 }
 
 h1,
@@ -47,12 +81,39 @@ h4,
 h5,
 h6 {
   font-family: var(--font-family-display);
+  font-weight: 700;
+  color: var(--color-warm-900);
+}
+
+/* Links - High contrast */
+a {
+  color: var(--color-secondary-600);
+}
+
+a:hover {
+  color: var(--color-secondary-700);
 }
 
 /* Glass Effect */
 .glass {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
+}
+
+/* High Contrast Product Cards */
+.product-card {
+  background-color: var(--color-warm-50);
+  border: 1px solid var(--color-warm-300);
+}
+
+.product-name {
+  color: var(--color-warm-900);
+  font-weight: 600;
+}
+
+.product-price {
+  color: var(--color-warm-900);
+  font-weight: 700;
 }
 
 /* Animations */
@@ -121,8 +182,8 @@ h6 {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -131,9 +192,48 @@ h6 {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-warm-400);
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-warm-500);
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* High contrast for form inputs */
+input,
+select,
+textarea {
+  color: var(--color-warm-900);
+  background-color: var(--color-warm-50);
+}
+
+input::placeholder {
+  color: var(--color-warm-500);
+}
+
+/* Ensure tags are readable */
+.tag {
+  font-weight: 600;
+}
+
+/* Print styles */
+@media print {
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
 }
