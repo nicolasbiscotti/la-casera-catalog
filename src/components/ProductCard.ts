@@ -12,16 +12,16 @@ import type { Product, Price } from "@/types";
 function renderPriceTag(price: Price): string {
   if (isWeightPrice(price)) {
     return `
-      <div class="space-y-1">
-        <div class="flex items-center gap-1.5 text-brand-600">
-          ${icon("scale", "w-3.5 h-3.5")}
-          <span class="font-bold">${formatCurrency(price.pricePerKg)}/kg</span>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          ${icon("scale", "w-4 h-4 text-brand-600")}
+          <span class="text-lg font-bold text-warm-900">${formatCurrency(price.pricePerKg)}/kg</span>
         </div>
-        <div class="flex flex-wrap gap-1">
+        <div class="flex flex-wrap gap-1.5">
           ${price.availableWeights
             .map(
               (w) => `
-            <span class="text-xs px-1.5 py-0.5 rounded bg-warm-100 text-warm-600">
+            <span class="text-sm px-2 py-1 rounded bg-warm-100 text-warm-800 font-medium">
               ${formatWeight(w)}
             </span>
           `,
@@ -42,13 +42,19 @@ function renderPriceTag(price: Price): string {
       fractionParts.push(`¼: ${formatCurrency(price.prices.quarter)}`);
 
     return `
-      <div class="space-y-1">
-        <div class="flex items-center gap-1.5 text-brand-600">
-          ${icon("slice", "w-3.5 h-3.5")}
-          <span class="text-xs font-medium text-warm-500">${price.fractionLabel}</span>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          ${icon("slice", "w-4 h-4 text-brand-600")}
+          <span class="text-sm font-semibold text-warm-700">${price.fractionLabel}</span>
         </div>
-        <div class="text-sm space-y-0.5">
-          ${fractionParts.map((part) => `<div class="text-warm-700">${part}</div>`).join("")}
+        <div class="space-y-1">
+          ${fractionParts
+            .map(
+              (part) => `
+            <div class="text-base font-bold text-warm-900">${part}</div>
+          `,
+            )
+            .join("")}
         </div>
       </div>
     `;
@@ -56,15 +62,15 @@ function renderPriceTag(price: Price): string {
 
   if (isUnitPrice(price)) {
     return `
-      <div class="flex items-center gap-1.5 text-brand-600">
-        ${icon("package", "w-3.5 h-3.5")}
-        <span class="font-bold">${formatCurrency(price.price)}</span>
-        <span class="text-xs text-warm-500">/ ${price.unitLabel}</span>
+      <div class="flex items-center gap-2">
+        ${icon("package", "w-4 h-4 text-brand-600")}
+        <span class="text-lg font-bold text-warm-900">${formatCurrency(price.price)}</span>
+        <span class="text-sm font-medium text-warm-600">/ ${price.unitLabel}</span>
       </div>
     `;
   }
 
-  return `<span class="text-warm-500">Consultar</span>`;
+  return `<span class="text-warm-600 font-medium">Consultar</span>`;
 }
 
 export function renderProductCard(product: Product): string {
@@ -73,22 +79,22 @@ export function renderProductCard(product: Product): string {
   const hasTags = product.tags && product.tags.length > 0;
 
   return `
-    <div class="bg-white rounded-xl border border-warm-200 p-4 hover:shadow-md hover:border-brand-200 transition-all animate-fade-in">
+    <div class="bg-white rounded-xl border border-warm-300 p-4 hover:shadow-lg hover:border-brand-400 transition-all animate-fade-in">
       <div class="flex justify-between items-start gap-3">
         <div class="flex-1 min-w-0">
-          <h4 class="font-semibold text-warm-800 leading-tight">${product.name}</h4>
-          ${brand ? `<p class="text-xs text-warm-500 mt-0.5">${brand.name}</p>` : ""}
-          ${product.description ? `<p class="text-xs text-warm-400 mt-1 line-clamp-2">${product.description}</p>` : ""}
+          <h4 class="text-lg font-bold text-warm-900 leading-tight">${product.name}</h4>
+          ${brand ? `<p class="text-sm font-medium text-warm-600 mt-1">${brand.name}</p>` : ""}
+          ${product.description ? `<p class="text-sm text-warm-500 mt-1 line-clamp-2">${product.description}</p>` : ""}
         </div>
         ${
           hasTags
             ? `
-          <div class="shrink-0">
+          <div class="shrink-0 flex flex-col gap-1">
             ${
               product.tags!.includes("premium")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
-                ${icon("tag", "w-3 h-3")}
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-100 text-brand-800 text-sm font-bold">
+                ${icon("tag", "w-3.5 h-3.5")}
                 Premium
               </span>
             `
@@ -97,7 +103,7 @@ export function renderProductCard(product: Product): string {
             ${
               product.tags!.includes("nuevo")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-100 text-secondary-700 text-sm font-bold">
                 Nuevo
               </span>
             `
@@ -106,7 +112,7 @@ export function renderProductCard(product: Product): string {
             ${
               product.tags!.includes("oferta")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-100 text-accent-700 text-sm font-bold">
                 Oferta
               </span>
             `
@@ -117,8 +123,8 @@ export function renderProductCard(product: Product): string {
             : ""
         }
       </div>
-      <div class="mt-3 pt-3 border-t border-warm-100">
-        ${primaryPrice ? renderPriceTag(primaryPrice) : '<span class="text-warm-500 text-sm">Consultar precio</span>'}
+      <div class="mt-4 pt-4 border-t border-warm-200">
+        ${primaryPrice ? renderPriceTag(primaryPrice) : '<span class="text-warm-600 font-medium">Consultar precio</span>'}
       </div>
     </div>
   `;

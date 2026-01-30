@@ -1,24 +1,42 @@
-import { icon } from "./icons";
+// Logo is imported as a static asset - place lacasera-logo.png in /public folder
+const LOGO_PATH = "/lacasera-logo.png";
 
 export function renderHeader(): string {
   const today = new Date();
 
   return `
-    <header class="sticky top-0 z-50 glass border-b border-warm-200">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-linear-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
-              ${icon("store", "w-5 h-5 sm:w-6 sm:h-6 text-white")}
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+      <!-- Blue top bar -->
+      <div class="bg-brand-600 text-white text-center py-1.5 px-4">
+        <p class="text-sm font-medium">Fiambres • Quesos • Dulces</p>
+      </div>
+      
+      <!-- Main header with logo -->
+      <div class="border-b border-warm-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Logo centered on mobile, left on desktop -->
+            <div class="flex justify-center sm:justify-start">
+              <img 
+                src="${LOGO_PATH}" 
+                alt="La Casera - Fiambres, Quesos, Dulces" 
+                class="h-16 sm:h-20 w-auto"
+              />
             </div>
-            <div>
-              <h1 class="text-xl sm:text-2xl font-bold text-warm-900 font-display">La Casera</h1>
-              <p class="text-xs sm:text-sm text-warm-500">Fiambrería y Almacén</p>
+            
+            <!-- Update date -->
+            <div class="text-center sm:text-right">
+              <p class="text-sm text-warm-500">Lista de precios actualizada</p>
+              <p class="text-lg font-bold text-warm-900">${today.toLocaleDateString(
+                "es-AR",
+                {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                },
+              )}</p>
             </div>
-          </div>
-          <div class="text-right">
-            <p class="text-xs text-warm-400">Actualizado</p>
-            <p class="text-sm font-medium text-warm-600">${today.toLocaleDateString("es-AR")}</p>
           </div>
         </div>
       </div>

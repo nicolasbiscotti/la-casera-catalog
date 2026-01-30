@@ -1,10 +1,10 @@
 import { icon } from "./icons";
 import { formatDate } from "@/utils";
 
+const STORE_NAME = import.meta.env.VITE_STORE_NAME;
 // WhatsApp number - configure this
 const WHATSAPP_NUMBER = import.meta.env.VITE_STORE_WHATSAPP; // Replace with actual number
-const WHATSAPP_MESSAGE =
-  "Hola! Quiero consultar sobre los productos del catálogo de La Casera.";
+const WHATSAPP_MESSAGE = `Hola! Quiero consultar sobre los productos del catálogo de ${STORE_NAME}.`;
 
 export function renderFooter(): string {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
@@ -19,7 +19,7 @@ export function renderFooter(): string {
               <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
                 ${icon("store", "w-4 h-4 text-white")}
               </div>
-              <span class="font-display font-bold text-lg">La Casera</span>
+              <span class="font-display font-bold text-lg">${STORE_NAME}</span>
             </div>
             <p class="text-warm-400 text-sm">Fiambrería y Almacén</p>
             <p class="text-warm-500 text-xs mt-1">Precios sujetos a cambios sin previo aviso</p>

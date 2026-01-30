@@ -62,6 +62,8 @@ export async function loadCatalog(): Promise<void> {
       categories,
       brands,
       products,
+      expandedCategories: new Set(categories.map((c) => c.id)),
+      expandedBrands: new Set(brands.map((b) => b.id)),
       isLoading: false,
     });
   } catch (error) {
