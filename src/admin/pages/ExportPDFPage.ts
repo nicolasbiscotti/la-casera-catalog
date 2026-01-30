@@ -21,6 +21,7 @@ interface JsPDFInstance {
   };
   setFillColor(...args: number[]): void;
   setTextColor(...args: number[]): void;
+  setDrawColor(...args: number[]): void;
   setFontSize(size: number): void;
   setFont(font: string, style: string): void;
   rect(x: number, y: number, w: number, h: number, style: string): void;
@@ -238,12 +239,13 @@ async function generatePDF(options: {
 
   // Add logo if available
   if (logo) {
-    // Center logo on page
-    const logoWidth = 80;
-    const logoHeight = 80;
+    // Center logo on page - maintain aspect ratio (logo is wider than tall)
+    const logoHeight = 40;
+    const logoWidth = 80; // Approximate aspect ratio of the logo
     const logoX = (pageWidth - logoWidth) / 2;
-    doc.addImage(logo, "PNG", logoX, 35, logoWidth, logoHeight);
-    yPos = 105;
+    const logoY = 32;
+    doc.addImage(logo, "PNG", logoX, logoY, logoWidth, logoHeight);
+    yPos = logoY + logoHeight + 10; // 10px spacing after logo
   } else {
     // Fallback to text if logo not available
     doc.setTextColor(...colors.primary);
@@ -342,7 +344,7 @@ async function generatePDF(options: {
         checkNewPage(20);
 
         // Brand subheader - RED
-        doc.setFillColor(...colors.accent);
+        doc.setFillColor(...colors.secondary);
         doc.rect(margin, yPos, contentWidth, 9, "F");
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(11);
@@ -446,7 +448,7 @@ async function generatePDF(options: {
         doc.text(productName, margin + 3, yPos + 6, { maxWidth: 70 });
 
         // Category badge - RED
-        doc.setTextColor(...colors.primary);
+        doc.setTextColor(...colors.secondary);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.text(category?.name || "", margin + 78, yPos + 6);

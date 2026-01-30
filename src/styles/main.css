@@ -23,18 +23,18 @@
   --color-brand-900: #1b305b;
   --color-brand-950: #121f3d;
 
-  /* Secondary Colors - La Casera Red */
+  /* Secondary Colors - Warm Red (softer for UI, pure red kept for PDF accents) */
   --color-secondary-50: #fef2f2;
   --color-secondary-100: #fee2e2;
   --color-secondary-200: #fecaca;
   --color-secondary-300: #fca5a5;
   --color-secondary-400: #f87171;
-  --color-secondary-500: #e31e26; /* Logo red - SECONDARY */
-  --color-secondary-600: #c81a21;
-  --color-secondary-700: #a71920;
-  --color-secondary-800: #8a1a1f;
-  --color-secondary-900: #721b1f;
-  --color-secondary-950: #3e0a0c;
+  --color-secondary-500: #dc2626; /* Warmer red for UI */
+  --color-secondary-600: #b91c1c; /* Warmer, less flashy */
+  --color-secondary-700: #991b1b;
+  --color-secondary-800: #7f1d1d;
+  --color-secondary-900: #6b1c1c;
+  --color-secondary-950: #450a0a;
 
   /* Accent Colors - La Casera Orange (for offers) */
   --color-accent-50: #fef8f3;
@@ -91,6 +91,15 @@ h5,
 h6 {
   font-family: var(--font-family-display);
   font-weight: 700;
+}
+
+/* Default heading color - can be overridden by utility classes */
+h1:not([class*="text-"]),
+h2:not([class*="text-"]),
+h3:not([class*="text-"]),
+h4:not([class*="text-"]),
+h5:not([class*="text-"]),
+h6:not([class*="text-"]) {
   color: var(--color-warm-900);
 }
 
