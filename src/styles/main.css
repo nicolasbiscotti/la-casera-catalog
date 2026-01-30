@@ -2,43 +2,52 @@
 
 /* 
  * Custom Theme for La Casera
- * Colors extracted from logo:
- * - Orange: #E87722 (primary brand color)
- * - Blue: #1E4B9C (secondary/accent)
- * - Red: #E31E26 (accent for alerts)
+ * Colors based on logo:
+ * - Blue: #1E4B9C (PRIMARY - main brand color)
+ * - Red: #E31E26 (SECONDARY - accent)
+ * - Orange: #E87722 (offers/promotions)
  * - Black: #1A1A1A (text, high contrast)
  * - White: #FFFFFF (backgrounds)
  */
 @theme {
-  /* Brand Colors - La Casera Orange */
-  --color-brand-50: #fef8f3;
-  --color-brand-100: #fee8d6;
-  --color-brand-200: #fcd0ad;
-  --color-brand-300: #f9b077;
-  --color-brand-400: #f28c42;
-  --color-brand-500: #e87722; /* Logo orange */
-  --color-brand-600: #d45f10;
-  --color-brand-700: #b04810;
-  --color-brand-800: #8d3a14;
-  --color-brand-900: #733214;
-  --color-brand-950: #3e1707;
+  /* Primary Colors - La Casera Blue */
+  --color-brand-50: #f0f5fb;
+  --color-brand-100: #dce8f5;
+  --color-brand-200: #c0d5ed;
+  --color-brand-300: #94b9e1;
+  --color-brand-400: #6194d1;
+  --color-brand-500: #3d72be;
+  --color-brand-600: #1e4b9c; /* Logo blue - PRIMARY */
+  --color-brand-700: #1a4085;
+  --color-brand-800: #1a376d;
+  --color-brand-900: #1b305b;
+  --color-brand-950: #121f3d;
 
-  /* Secondary Colors - La Casera Blue */
-  --color-secondary-50: #f0f5fb;
-  --color-secondary-100: #dce8f5;
-  --color-secondary-200: #c0d5ed;
-  --color-secondary-300: #94b9e1;
-  --color-secondary-400: #6194d1;
-  --color-secondary-500: #3d72be;
-  --color-secondary-600: #1e4b9c; /* Logo blue */
-  --color-secondary-700: #1a4085;
-  --color-secondary-800: #1a376d;
-  --color-secondary-900: #1b305b;
-  --color-secondary-950: #121f3d;
+  /* Secondary Colors - La Casera Red */
+  --color-secondary-50: #fef2f2;
+  --color-secondary-100: #fee2e2;
+  --color-secondary-200: #fecaca;
+  --color-secondary-300: #fca5a5;
+  --color-secondary-400: #f87171;
+  --color-secondary-500: #e31e26; /* Logo red - SECONDARY */
+  --color-secondary-600: #c81a21;
+  --color-secondary-700: #a71920;
+  --color-secondary-800: #8a1a1f;
+  --color-secondary-900: #721b1f;
+  --color-secondary-950: #3e0a0c;
 
-  /* Accent Red - For alerts/warnings */
-  --color-accent-500: #e31e26; /* Logo red */
-  --color-accent-600: #c91a21;
+  /* Accent Colors - La Casera Orange (for offers) */
+  --color-accent-50: #fef8f3;
+  --color-accent-100: #fee8d6;
+  --color-accent-200: #fcd0ad;
+  --color-accent-300: #f9b077;
+  --color-accent-400: #f28c42;
+  --color-accent-500: #e87722; /* Logo orange - OFFERS */
+  --color-accent-600: #d45f10;
+  --color-accent-700: #b04810;
+  --color-accent-800: #8d3a14;
+  --color-accent-900: #733214;
+  --color-accent-950: #3e1707;
 
   /* Neutral Colors - High Contrast for accessibility */
   --color-warm-50: #ffffff;
@@ -85,13 +94,13 @@ h6 {
   color: var(--color-warm-900);
 }
 
-/* Links - High contrast */
+/* Links - High contrast with blue */
 a {
-  color: var(--color-secondary-600);
+  color: var(--color-brand-600);
 }
 
 a:hover {
-  color: var(--color-secondary-700);
+  color: var(--color-brand-700);
 }
 
 /* Glass Effect */
@@ -204,7 +213,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--color-brand-500);
+  outline: 3px solid var(--color-brand-600);
   outline-offset: 2px;
 }
 

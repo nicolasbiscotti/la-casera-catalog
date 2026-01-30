@@ -1,6 +1,6 @@
 /**
  * Export PDF Page
- * Generates a PDF catalog from the admin panel
+ * Generates a PDF catalog with La Casera logo
  */
 
 import { adminIcon } from "../components/icons";
@@ -42,6 +42,14 @@ interface JsPDFInstance {
   addPage(): void;
   setPage(page: number): void;
   save(filename: string): void;
+  addImage(
+    imageData: string,
+    format: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): void;
 }
 
 interface CatalogData {
@@ -58,6 +66,29 @@ interface ExportStats {
   totalProducts: number;
   availableProducts: number;
   unavailableProducts: number;
+}
+
+// La Casera logo as base64 - will be loaded from file
+let logoBase64: string | null = null;
+
+async function loadLogo(): Promise<string | null> {
+  if (logoBase64) return logoBase64;
+
+  try {
+    const response = await fetch("/lacasera-logo.png");
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        logoBase64 = reader.result as string;
+        resolve(logoBase64);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
 }
 
 function getExportStats(): ExportStats {
@@ -110,8 +141,9 @@ async function generatePDF(options: {
   includeUnavailable: boolean;
   groupBy: "category" | "brand";
 }): Promise<void> {
-  // Load jsPDF from CDN if not already loaded
+  // Load jsPDF and logo
   await loadJsPDF();
+  const logo = await loadLogo();
 
   const { jsPDF } = jspdf;
   const doc = new jsPDF();
@@ -128,11 +160,11 @@ async function generatePDF(options: {
     storeName: "La Casera",
   };
 
-  // Colors - La Casera Logo palette
+  // Colors - La Casera Logo palette (Blue primary, Red secondary, Orange accent)
   const colors = {
-    primary: [232, 119, 34] as [number, number, number], // #E87722 - Orange
-    secondary: [30, 75, 156] as [number, number, number], // #1E4B9C - Blue
-    accent: [227, 30, 38] as [number, number, number], // #E31E26 - Red
+    primary: [30, 75, 156] as [number, number, number], // #1E4B9C - Blue
+    secondary: [227, 30, 38] as [number, number, number], // #E31E26 - Red
+    accent: [232, 119, 34] as [number, number, number], // #E87722 - Orange
     dark: [26, 26, 26] as [number, number, number], // #1A1A1A - Black (text)
     medium: [82, 82, 82] as [number, number, number], // #525252 - Gray
     light: [212, 212, 212] as [number, number, number], // #D4D4D4 - Light gray
@@ -154,19 +186,25 @@ async function generatePDF(options: {
   }
 
   function addHeader(): void {
+    // Blue header bar
     doc.setFillColor(...colors.primary);
-    doc.rect(0, 0, pageWidth, 12, "F");
+    doc.rect(0, 0, pageWidth, 14, "F");
+
+    // Red accent line
+    doc.setFillColor(...colors.secondary);
+    doc.rect(0, 14, pageWidth, 2, "F");
+
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(data.storeName + " - Catálogo de Precios", margin, 8);
+    doc.text(data.storeName + " - Catálogo de Precios", margin, 9);
     doc.text(
       `Actualizado: ${data.generatedAt.toLocaleDateString("es-AR")}`,
       pageWidth - margin,
-      8,
+      9,
       { align: "right" },
     );
-    yPos = 20;
+    yPos = 24;
   }
 
   function addFooter(): void {
@@ -188,36 +226,66 @@ async function generatePDF(options: {
     }
   }
 
-  // Title page
+  // ===== TITLE PAGE =====
+
+  // Blue header band
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 60, "F");
+  doc.rect(0, 0, pageWidth, 20, "F");
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(32);
+  // Red accent band
+  doc.setFillColor(...colors.secondary);
+  doc.rect(0, 20, pageWidth, 4, "F");
+
+  // Add logo if available
+  if (logo) {
+    // Center logo on page
+    const logoWidth = 80;
+    const logoHeight = 80;
+    const logoX = (pageWidth - logoWidth) / 2;
+    doc.addImage(logo, "PNG", logoX, 35, logoWidth, logoHeight);
+    yPos = 105;
+  } else {
+    // Fallback to text if logo not available
+    doc.setTextColor(...colors.primary);
+    doc.setFontSize(36);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.storeName, pageWidth / 2, 55, { align: "center" });
+
+    doc.setTextColor(...colors.accent);
+    doc.setFontSize(14);
+    doc.text("Fiambres • Quesos • Dulces", pageWidth / 2, 65, {
+      align: "center",
+    });
+    yPos = 80;
+  }
+
+  // "Catálogo de Precios" title
+  doc.setTextColor(...colors.dark);
+  doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text(data.storeName, pageWidth / 2, 35, { align: "center" });
-
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "normal");
-  doc.text("Catálogo de Precios", pageWidth / 2, 48, { align: "center" });
-
-  yPos = 80;
+  doc.text("Catálogo de Precios", pageWidth / 2, yPos, { align: "center" });
+  yPos += 15;
 
   // Summary box
   doc.setFillColor(...colors.bg);
-  doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, "F");
+  doc.roundedRect(margin, yPos, contentWidth, 40, 3, 3, "F");
+  doc.setDrawColor(...colors.primary);
+  doc.roundedRect(margin, yPos, contentWidth, 40, 3, 3, "S");
 
-  doc.setTextColor(...colors.dark);
+  doc.setTextColor(...colors.primary);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("Resumen del Catálogo", margin + 10, yPos + 12);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setTextColor(...colors.dark);
-  doc.text(`• ${data.categories.length} categorías`, margin + 10, yPos + 22);
-  doc.text(`• ${data.brands.length} marcas`, margin + 70, yPos + 22);
-  doc.text(`• ${data.products.length} productos`, margin + 120, yPos + 22);
+  doc.text(`• ${data.categories.length} categorías`, margin + 10, yPos + 24);
+  doc.text(`• ${data.brands.length} marcas`, margin + 70, yPos + 24);
+  doc.text(`• ${data.products.length} productos`, margin + 125, yPos + 24);
+
+  doc.setFontSize(10);
+  doc.setTextColor(...colors.medium);
   doc.text(
     `Generado: ${data.generatedAt.toLocaleDateString("es-AR", {
       day: "numeric",
@@ -227,7 +295,7 @@ async function generatePDF(options: {
       minute: "2-digit",
     })}`,
     margin + 10,
-    yPos + 30,
+    yPos + 35,
   );
 
   // Start catalog content on new page
@@ -244,7 +312,7 @@ async function generatePDF(options: {
 
       checkNewPage(25);
 
-      // Category header
+      // Category header - BLUE
       doc.setFillColor(...colors.primary);
       doc.roundedRect(margin, yPos, contentWidth, 12, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
@@ -273,8 +341,8 @@ async function generatePDF(options: {
 
         checkNewPage(20);
 
-        // Brand subheader
-        doc.setFillColor(...colors.secondary);
+        // Brand subheader - RED
+        doc.setFillColor(...colors.accent);
         doc.rect(margin, yPos, contentWidth, 9, "F");
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(11);
@@ -333,7 +401,7 @@ async function generatePDF(options: {
 
       checkNewPage(25);
 
-      // Brand header
+      // Brand header - BLUE
       doc.setFillColor(...colors.primary);
       doc.roundedRect(margin, yPos, contentWidth, 12, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
@@ -377,8 +445,8 @@ async function generatePDF(options: {
         }
         doc.text(productName, margin + 3, yPos + 6, { maxWidth: 70 });
 
-        // Category badge
-        doc.setTextColor(...colors.secondary);
+        // Category badge - RED
+        doc.setTextColor(...colors.primary);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.text(category?.name || "", margin + 78, yPos + 6);
@@ -405,7 +473,7 @@ async function generatePDF(options: {
   addFooter();
 
   // Save PDF
-  const fileName = `catalogo-${data.storeName.toLowerCase().replace(/\s+/g, "-")}-${
+  const fileName = `catalogo-la-casera-${
     data.generatedAt.toISOString().split("T")[0]
   }.pdf`;
   doc.save(fileName);
@@ -455,7 +523,7 @@ export function renderExportPage(
                 <input 
                   type="checkbox" 
                   id="includeUnavailable" 
-                  class="w-5 h-5 rounded border-warm-300 text-brand-500 focus:ring-brand-400"
+                  class="w-5 h-5 rounded border-warm-300 text-brand-600 focus:ring-brand-400"
                 />
                 <div>
                   <span class="text-sm font-medium text-warm-700">Incluir productos sin stock</span>
@@ -473,7 +541,7 @@ export function renderExportPage(
                     name="groupBy" 
                     value="category" 
                     checked
-                    class="text-brand-500 focus:ring-brand-400"
+                    class="text-brand-600 focus:ring-brand-400"
                   />
                   <span class="text-sm text-warm-700">Categoría</span>
                 </label>
@@ -482,7 +550,7 @@ export function renderExportPage(
                     type="radio" 
                     name="groupBy" 
                     value="brand"
-                    class="text-brand-500 focus:ring-brand-400"
+                    class="text-brand-600 focus:ring-brand-400"
                   />
                   <span class="text-sm text-warm-700">Marca</span>
                 </label>
@@ -494,7 +562,7 @@ export function renderExportPage(
           <div class="pt-4 border-t border-warm-100">
             <button
               id="generate-pdf-btn"
-              class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors"
+              class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors"
             >
               ${adminIcon("download", "w-5 h-5")}
               <span id="btn-text">Generar y Descargar PDF</span>
@@ -510,14 +578,14 @@ export function renderExportPage(
       </div>
 
       <!-- Info card -->
-      <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-2xl">
+      <div class="mt-4 bg-brand-50 border border-brand-200 rounded-xl p-4 max-w-2xl">
         <div class="flex gap-3">
-          ${adminIcon("alertCircle", "w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5")}
+          ${adminIcon("alertCircle", "w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5")}
           <div>
-            <p class="font-medium text-blue-800">Sobre el PDF generado</p>
-            <ul class="text-sm text-blue-700 mt-1 space-y-1">
+            <p class="font-medium text-brand-800">Sobre el PDF generado</p>
+            <ul class="text-sm text-brand-700 mt-1 space-y-1">
+              <li>• Incluye el logo de La Casera en la portada</li>
               <li>• Formato A4 optimizado para impresión</li>
-              <li>• Incluye portada con resumen</li>
               <li>• Fecha de generación en cada página</li>
               <li>• Precios formateados en pesos argentinos</li>
             </ul>

@@ -89,11 +89,11 @@ export function renderProductCard(product: Product): string {
         ${
           hasTags
             ? `
-          <div class="flex-shrink-0 flex flex-col gap-1">
+          <div class="shrink-0 flex flex-col gap-1">
             ${
               product.tags!.includes("premium")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-100 text-brand-800 text-sm font-bold">
                 ${icon("tag", "w-3.5 h-3.5")}
                 Premium
               </span>
@@ -103,7 +103,7 @@ export function renderProductCard(product: Product): string {
             ${
               product.tags!.includes("nuevo")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-100 text-secondary-800 text-sm font-bold">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-100 text-secondary-700 text-sm font-bold">
                 Nuevo
               </span>
             `
@@ -112,7 +112,7 @@ export function renderProductCard(product: Product): string {
             ${
               product.tags!.includes("oferta")
                 ? `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-800 text-sm font-bold">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-100 text-accent-700 text-sm font-bold">
                 Oferta
               </span>
             `
