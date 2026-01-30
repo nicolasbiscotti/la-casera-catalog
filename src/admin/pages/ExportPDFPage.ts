@@ -1,6 +1,6 @@
 /**
  * Export PDF Page
- * Generates a PDF catalog with La Casera logo
+ * Generates a PDF catalog from the admin panel
  */
 
 import { adminIcon } from "../components/icons";
@@ -142,7 +142,7 @@ async function generatePDF(options: {
   includeUnavailable: boolean;
   groupBy: "category" | "brand";
 }): Promise<void> {
-  // Load jsPDF and logo
+  // Load jsPDF from CDN if not already loaded and logo
   await loadJsPDF();
   const logo = await loadLogo();
 
@@ -158,12 +158,13 @@ async function generatePDF(options: {
       ? products
       : products.filter((p) => p.isAvailable),
     generatedAt: new Date(),
-    storeName: "La Casera",
+    storeName: import.meta.env.VITE_STORE_NAME,
   };
 
   // Colors - La Casera Logo palette (Blue primary, Red secondary, Orange accent)
   const colors = {
     primary: [30, 75, 156] as [number, number, number], // #1E4B9C - Blue
+    primary500: [61, 114, 190] as [number, number, number], // #3D72BE - Blue
     secondary: [227, 30, 38] as [number, number, number], // #E31E26 - Red
     accent: [232, 119, 34] as [number, number, number], // #E87722 - Orange
     dark: [26, 26, 26] as [number, number, number], // #1A1A1A - Black (text)
@@ -344,7 +345,7 @@ async function generatePDF(options: {
         checkNewPage(20);
 
         // Brand subheader - RED
-        doc.setFillColor(...colors.secondary);
+        doc.setFillColor(...colors.primary500);
         doc.rect(margin, yPos, contentWidth, 9, "F");
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(11);
@@ -448,7 +449,7 @@ async function generatePDF(options: {
         doc.text(productName, margin + 3, yPos + 6, { maxWidth: 70 });
 
         // Category badge - RED
-        doc.setTextColor(...colors.secondary);
+        doc.setTextColor(...colors.primary500);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.text(category?.name || "", margin + 78, yPos + 6);
@@ -475,7 +476,7 @@ async function generatePDF(options: {
   addFooter();
 
   // Save PDF
-  const fileName = `catalogo-la-casera-${
+  const fileName = `catalogo-${data.storeName.toLowerCase().replace(/\s+/g, "-")}-${
     data.generatedAt.toISOString().split("T")[0]
   }.pdf`;
   doc.save(fileName);
