@@ -9,6 +9,19 @@ export const icons = {
 
   store: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" /></svg>`,
 
+  // New category icons
+  bread: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><ellipse cx="12" cy="8" rx="8" ry="4"/><path d="M4 8v8c0 2.21 3.58 4 8 4s8-1.79 8-4V8"/></svg>`,
+
+  fruit: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><circle cx="12" cy="14" r="7"/><path d="M12 7V3M9 4c1.5 1 4.5 1 6 0"/></svg>`,
+
+  vegetable: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M7 21c-2.5-2-4-5.5-4-9 0-4 3-7 5-7 1 2 4 3 7 3s4-1 5-3c2 0 5 3 5 7 0 3.5-1.5 7-4 9"/><path d="M12 3v4"/></svg>`,
+
+  sweet: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M9.5 7.5L7 10l2.5 2.5M14.5 7.5L17 10l-2.5 2.5"/><rect x="3" y="6" width="18" height="8" rx="4"/><path d="M6 14v4a2 2 0 002 2h8a2 2 0 002-2v-4"/></svg>`,
+
+  drink: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M8 21h8M12 15v6M6 3h12l-1.5 9a4.5 4.5 0 01-9 0L6 3z"/></svg>`,
+
+  frozen: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>`,
+
   // UI icons
   search: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>`,
 
@@ -46,7 +59,7 @@ export function icon(
   return svg.replace("<svg", `<svg class="${className}"`);
 }
 
-// Get category icon by iconName
+// Get category icon by iconName - extended with new icons
 export function getCategoryIcon(
   iconName: string | undefined,
   className: string = "w-5 h-5",
@@ -56,6 +69,12 @@ export function getCategoryIcon(
     cheese: "cheese",
     milk: "milk",
     store: "store",
+    bread: "bread",
+    fruit: "fruit",
+    vegetable: "vegetable",
+    sweet: "sweet",
+    drink: "drink",
+    frozen: "frozen",
   };
 
   const iconKey = iconMap[iconName || "store"] || "store";
