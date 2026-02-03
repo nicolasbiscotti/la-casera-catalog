@@ -1,47 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+
+    // --- HELPER FUNCTIONS ---
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Checks for 'admin' role in Custom Claims
     function isAdmin() {
-      return isAuthenticated() && 
-      request.auth.token.role == 'admin';
+      return isAuthenticated() && request.auth.token.role == 'admin';
     }
 
+    // Checks for 'admin' OR 'editor' role
     function isEditor() {
       return isAuthenticated() && 
       (request.auth.token.role == 'admin' || request.auth.token.role == 'editor');
     }
 
-    // Public read access for catalog data
+    // --- ROOT COLLECTIONS ---
+
     match /categories/{categoryId} {
-      allow read: if isAuthenticated(); // 🔒 Prevents open scraping
+      allow read: if true;
       allow write: if isEditor();
     }
 
     match /brands/{brandId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isEditor();
     }
 
     match /products/{productId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isEditor();
     }
 
-    // Price history - admin only write
     match /priceHistory/{historyId} {
-      allow read: if isEditor();
-      allow write: if isEditor();
+      allow read, write: if isEditor(); // Editors usually need to see/write history
     }
 
-    // Admin users - admin only
     match /adminUsers/{userId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
-      allow write: if false; // STRICTLY SERVER-SIDE ONLY
+      allow write: if false; 
     }
 
     match /analytics/{docId} {
@@ -49,19 +49,18 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-
-    // Environment-specific collections
+    // --- ENVIRONMENT COLLECTIONS (Dev/Staging) ---
     match /environments/{envId}/{collection}/{docId} {
 
-      // Analytics: Authenticated users can log events (create), but only Admins can manage them
+      // Analytics
       allow create: if collection == 'analytics' && isAuthenticated();
       allow read, update, delete: if collection == 'analytics' && isAdmin();
 
-      // Catalog: Auth to Read, Admin Claim to Write
-      allow read: if collection in ['categories', 'brands', 'products'] && isAuthenticated();
-      allow write: if collection in ['categories', 'brands', 'products'] && isAdmin();
+      // Catalog: Fixed to allow Editors to write in Dev environments too
+      allow read: if collection in ['categories', 'brands', 'products'];
+      allow write: if collection in ['categories', 'brands', 'products'] && isEditor(); // ✅ FIXED: Changed from isAdmin to isEditor
 
-      // Sensitive: Admin Claim Only
+      // Sensitive Data
       allow read, write: if collection in ['priceHistory', 'adminUsers'] && isAdmin();
     }
   }
