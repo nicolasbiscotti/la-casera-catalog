@@ -1,7 +1,6 @@
 import { icon } from "./icons";
 import {
   formatCurrency,
-  formatWeight,
   isWeightPrice,
   isFractionPrice,
   isUnitPrice,
@@ -17,17 +16,7 @@ function renderPriceTag(price: Price): string {
           ${icon("scale", "w-4 h-4 text-brand-600")}
           <span class="text-lg font-bold text-warm-900">${formatCurrency(price.pricePerKg)}/kg</span>
         </div>
-        <div class="flex flex-wrap gap-1.5">
-          ${price.availableWeights
-            .map(
-              (w) => `
-            <span class="text-sm px-2 py-1 rounded bg-warm-100 text-warm-800 font-medium">
-              ${formatWeight(w)}
-            </span>
-          `,
-            )
-            .join("")}
-        </div>
+        
       </div>
     `;
   }
@@ -44,7 +33,7 @@ function renderPriceTag(price: Price): string {
     return `
       <div class="space-y-2">
         <div class="flex items-center gap-2">
-          ${icon("slice", "w-4 h-4 text-brand-600")}
+          ${icon("package", "w-4 h-4 text-brand-600")}
           <span class="text-sm font-semibold text-warm-700">${price.fractionLabel}</span>
         </div>
         <div class="space-y-1">
