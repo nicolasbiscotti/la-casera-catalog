@@ -157,32 +157,44 @@ la-casera-catalog/
 ### Category
 
 ```typescript
-{ id, name, slug, description?, iconName?, isActive, sortOrder }
+{ id, name, slug, description?, iconName?, isActive, sortOrder, createdAt, updatedAt, createdBy?, lastModifiedBy? }
 ```
 
 ### Brand
 
 ```typescript
-{ id, name, description?, logoUrl?, isActive, sortOrder }
+{ id, name, description?, logoUrl?, isActive, sortOrder, createdAt, updatedAt, createdBy?, lastModifiedBy? }
 ```
 
 ### Product
 
 ```typescript
-{ id, name, brandId, categoryId, description?, prices[], isAvailable, tags?[] }
+{ id, name, brandId, categoryId, description?, imageUrl?, prices: Price[], isAvailable, tags?: string[], createdAt, updatedAt, createdBy?, lastModifiedBy? }
 ```
 
 ### Sistema de Precios
 
 ```typescript
 // Por unidad
-{ type: 'unit', price: 2500, unitLabel: 'paquete' }
+{ type: 'unit', price: number, unitLabel: string }  // ej: 'paquete', 'unidad', 'docena'
 
-// Por peso
-{ type: 'weight', pricePerKg: 8500, availableWeights: [100, 250, 500, 1000] }
+// Por peso (gramos)
+{ type: 'weight', pricePerKg: number, availableWeights: number[] }  // ej: [100, 250, 500, 1000]
 
 // Por fracción
-{ type: 'fraction', prices: { whole: 25000, half: 13000, quarter: 7000 }, fractionLabel: 'horma' }
+{ type: 'fraction', prices: { whole: number, half?: number, quarter?: number }, fractionLabel: string }  // ej: 'horma', 'pieza'
+```
+
+### PriceChange (historial)
+
+```typescript
+{ id, productId, previousPrices: Price[], newPrices: Price[], changedAt, changedBy, reason? }
+```
+
+### AdminUser
+
+```typescript
+{ uid, email, displayName?, role: 'admin' | 'editor', isActive, lastLogin?, createdAt }
 ```
 
 ## 📄 Licencia
