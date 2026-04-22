@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+For the full implementation guide (store pattern, rendering, components, services, pages, router), see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ## Commands
 
 ```bash
