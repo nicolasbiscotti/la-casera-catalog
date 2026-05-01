@@ -48,5 +48,3 @@ export {
   logPriceChange,
   getRecentPriceChanges,
 } from "./priceHistoryService";
-
-export type { PriceChangeLog } from "./priceHistoryService";

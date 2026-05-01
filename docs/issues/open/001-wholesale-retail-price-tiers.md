@@ -3,6 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Type** | feature |
+| **Priority** | high |
 | **Status** | open |
 | **Opened** | 2026-04-22 |
 

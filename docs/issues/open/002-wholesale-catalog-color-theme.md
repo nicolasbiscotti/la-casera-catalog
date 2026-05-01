@@ -3,6 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Type** | feature |
+| **Priority** | medium |
 | **Status** | open |
 | **Opened** | 2026-04-22 |
 | **Depends on** | [#001](001-wholesale-retail-price-tiers.md) |
