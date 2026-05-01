@@ -102,7 +102,7 @@ All entities include `createdAt`, `updatedAt`, `createdBy?`, `lastModifiedBy?` a
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **la-casera-catalog** (793 symbols, 1647 relationships, 66 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **la-casera-catalog** (806 symbols, 1662 relationships, 67 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
