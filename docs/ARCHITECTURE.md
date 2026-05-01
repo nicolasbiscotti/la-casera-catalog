@@ -19,16 +19,17 @@ A store is a module that owns a private state object, exposes read/write functio
 let state: CatalogState = { ... };
 
 // Subscribers
-const subscribers = new Set<() => void>();
+type Subscriber = (state: CatalogState) => void;
+const subscribers = new Set<Subscriber>();
 
-export function subscribe(callback: () => void): () => void {
+export function subscribe(callback: Subscriber): () => void {
   subscribers.add(callback);
   return () => subscribers.delete(callback);  // Returns unsubscribe fn
 }
 
 function setState(updates: Partial<CatalogState>): void {
   state = { ...state, ...updates };           // Immutable shallow copy
-  subscribers.forEach(fn => fn());
+  subscribers.forEach(fn => fn(state));
 }
 
 // Public read access
@@ -56,17 +57,17 @@ export async function loadCatalog(): Promise<void> {
 
 ## Rendering
 
-The app root (`CatalogApp.ts`, `AdminApp.ts`) subscribes to the store and re-renders on every state change.
+### CatalogApp
+
+`CatalogApp.ts` subscribes to the store and re-renders on every state change. It checks whether the layout shell already exists in the DOM and only replaces the inner content when it does:
 
 ```typescript
-export function init(): void {
+export function initCatalogApp(): void {
   subscribe(render);   // Wire render to store
   render();            // First paint
   loadCatalog();       // Triggers async load → setState → render
 }
 ```
-
-Render always checks what already exists in the DOM to decide how much to repaint:
 
 ```typescript
 function render(): void {
@@ -94,6 +95,32 @@ function render(): void {
 - `attachListeners()` must always be called **after** `innerHTML` is set.
 - Static shell listeners (`attachLayoutListeners`) run once on first render.
 - Dynamic content listeners (`attachCatalogListeners`) run on every render.
+
+### AdminApp
+
+`AdminApp.ts` subscribes to both `authStore` and `adminDataStore`. On every state change it replaces the full `app.innerHTML`, including the sidebar and the active page content, then re-attaches all listeners:
+
+```typescript
+export function initAdminApp(): void {
+  subscribeAuth((authState) => { if (authState.isInitialized) render(); });
+  subscribeAdmin(() => { if (isAuthenticated()) render(); });
+  initAuthListener();
+  render();
+}
+```
+
+AdminApp also holds its own internal UI state object that is separate from the stores:
+
+```typescript
+interface AdminAppState {
+  currentPage: string;
+  currentId: string | null;
+  toast: { message: string; type: "success" | "error" } | null;
+}
+let appState: AdminAppState = { currentPage: "dashboard", currentId: null, toast: null };
+```
+
+`navigate(page, id?)` mutates `appState` and calls `render()` directly. `showToast(message, type)` sets `appState.toast`, calls `render()`, and clears the toast after 3 s.
 
 ---
 
@@ -164,11 +191,23 @@ Use debounce for inputs that trigger store actions on every keystroke.
 
 ## Admin pages
 
-An admin page is a pair of exported functions: one that returns an HTML string, one that attaches listeners. The app root calls both in sequence after routing.
+The admin panel contains these pages, each in `src/admin/pages/`:
+
+| File | Route key | Description |
+|---|---|---|
+| `DashboardPage.ts` | `dashboard` | Summary view, entry point after login |
+| `CategoriesPage.ts` | `categories` | List + create/edit form |
+| `BrandsPage.ts` | `brands` | List + create/edit form |
+| `ProductsPage.ts` | `products` | List + create/edit form |
+| `HistoryPage.ts` | `history` | Price-change audit log |
+| `ExportPDFPage.ts` | `export` | PDF catalog export |
+| `LoginPage.ts` | — | Shown when unauthenticated |
+
+Each page exposes a `renderXxxPage → string` function and an `attachXxxListeners → void` function. `AdminApp.ts` calls both after routing to the page.
 
 ```typescript
 // renderXxxPage → string
-export function renderCategoriesPage(onNavigate: NavigateFn): string {
+export function renderCategoriesListPage(onNavigate: NavigateFn): string {
   const { categories, isLoading } = getAdminState();
 
   if (isLoading) return `<p>Cargando...</p>`;
@@ -213,6 +252,24 @@ export function attachCategoriesListeners(
 }
 ```
 
+**Exception — `attachProductsListeners`** accepts a third `render` callback because the product list has an inline availability toggle that updates the store but needs to re-render without navigating:
+
+```typescript
+export function attachProductsListeners(
+  onNavigate: NavigateFn,
+  showToast: ToastFn,
+  render: () => void,   // direct re-render hook; see issue #003
+): void { ... }
+```
+
+**Exception — `HistoryPage.ts`** owns module-level state (`historyData`, `isLoadingHistory`, `historyError`) rather than using a store, because price-history data is only consumed by this page. `attachHistoryListeners` receives a `render` callback for the same reason:
+
+```typescript
+export function attachHistoryListeners(render: () => void): void { ... }
+```
+
+Both exceptions are tracked in the issue tracker and scheduled for removal.
+
 **Form pages** read field values directly from the DOM on submit:
 
 ```typescript
@@ -226,7 +283,7 @@ document.getElementById("category-form")
   });
 ```
 
-**Navigation** is always passed as a callback — pages never import the router directly:
+**Navigation** is always passed as a callback — pages never import the router or `AdminApp.ts` directly. `onNavigate` inside admin pages resolves to `AdminApp.ts:navigate`, which mutates `appState` and calls `render()`. It does **not** change `window.location.hash`; all admin sub-pages share the same hash (`#/admin`):
 
 ```typescript
 onNavigate("categories");           // List
@@ -289,7 +346,7 @@ route("/admin*", () => initAdminApp());
 initRouter();
 ```
 
-Navigate programmatically with `navigate(path)` (sets `window.location.hash`). Inside admin pages use the `onNavigate` callback instead of calling `navigate` directly.
+The router exposes `navigate(path)` (from `src/router/index.ts`) which sets `window.location.hash`. This is distinct from `AdminApp.ts:navigate`, which switches pages inside the admin panel without changing the hash. Inside admin pages, always use the `onNavigate` callback — never import either `navigate` function directly.
 
 ---
 
