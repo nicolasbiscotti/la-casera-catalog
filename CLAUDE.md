@@ -2,7 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-For the full implementation guide (store pattern, rendering, components, services, pages, router), see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Before starting any task
+
+Read these three documents in full before writing or editing any code. They define how work is done on this project — not just what the code does, but how decisions are made, how changes are scoped, and what workflow to follow.
+
+| Document | Read when |
+|----------|-----------|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Always — store pattern, rendering, components, services, pages, router |
+| [`docs/ENGINEERING_APPROACH.md`](docs/ENGINEERING_APPROACH.md) | Always — issue structure, acceptance criteria, TDD cycle, vertical slices |
+| [`docs/STRANGLER_FIG.md`](docs/STRANGLER_FIG.md) | Always — migration workflow, dependency order for open refactors, GitNexus integration points |
+
+Do not begin implementation until you have read all three.
 
 ## Commands
 
@@ -91,7 +101,7 @@ All entities include `createdAt`, `updatedAt`, `createdBy?`, `lastModifiedBy?` a
 | `weight` | `pricePerKg: number, availableWeights: number[]` (grams, e.g. `[100, 250, 500]`) |
 | `fraction` | `prices: { whole, half?, quarter? }, fractionLabel: string` (e.g. `'horma'`) |
 
-**PriceChange** (history collection): `id, productId, previousPrices: Price[], newPrices: Price[], changedAt, changedBy, reason?`
+**PriceChange** (history collection): `id, productId, productName, previousPrices: Price[], newPrices: Price[], changedAt, changedBy, reason?`
 
 ## ESLint rules to know
 
@@ -102,7 +112,7 @@ All entities include `createdAt`, `updatedAt`, `createdBy?`, `lastModifiedBy?` a
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **la-casera-catalog** (806 symbols, 1662 relationships, 67 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **la-casera-catalog** (907 symbols, 1794 relationships, 76 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

@@ -15,24 +15,9 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { getFirestoreDb, getCollectionPath } from "./firebase";
-import type { Price } from "@/types";
+import type { Price, PriceChange } from "@/types";
 
-// Price Change Log type (extends the base PriceChange with productName for history display)
-export interface PriceChangeLog {
-  id: string;
-  productId: string;
-  productName: string;
-  previousPrices: Price[];
-  newPrices: Price[];
-  changedBy: string;
-  changedAt: Date;
-  reason?: string;
-}
-
-/**
- * Convert Firestore document to PriceChangeLog
- */
-function docToPriceChangeLog(id: string, data: DocumentData): PriceChangeLog {
+function docToPriceChange(id: string, data: DocumentData): PriceChange {
   return {
     id,
     productId: data.productId,
@@ -58,12 +43,12 @@ function getPriceHistoryCollection() {
  */
 export async function getPriceHistory(
   limitCount: number = 50,
-): Promise<PriceChangeLog[]> {
+): Promise<PriceChange[]> {
   const historyRef = getPriceHistoryCollection();
   const q = query(historyRef, orderBy("changedAt", "desc"), limit(limitCount));
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => docToPriceChangeLog(doc.id, doc.data()));
+  return snapshot.docs.map((doc) => docToPriceChange(doc.id, doc.data()));
 }
 
 /**
@@ -71,7 +56,7 @@ export async function getPriceHistory(
  */
 export async function getProductPriceHistory(
   productId: string,
-): Promise<PriceChangeLog[]> {
+): Promise<PriceChange[]> {
   const historyRef = getPriceHistoryCollection();
   const q = query(
     historyRef,
@@ -80,7 +65,7 @@ export async function getProductPriceHistory(
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => docToPriceChangeLog(doc.id, doc.data()));
+  return snapshot.docs.map((doc) => docToPriceChange(doc.id, doc.data()));
 }
 
 /**
@@ -93,7 +78,7 @@ export async function logPriceChange(data: {
   newPrices: Price[];
   changedBy: string;
   reason?: string;
-}): Promise<PriceChangeLog> {
+}): Promise<PriceChange> {
   const historyRef = getPriceHistoryCollection();
 
   const now = Timestamp.now();
@@ -116,7 +101,7 @@ export async function logPriceChange(data: {
  */
 export async function getRecentPriceChanges(
   days: number = 7,
-): Promise<PriceChangeLog[]> {
+): Promise<PriceChange[]> {
   const historyRef = getPriceHistoryCollection();
 
   const cutoffDate = new Date();
@@ -129,5 +114,5 @@ export async function getRecentPriceChanges(
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => docToPriceChangeLog(doc.id, doc.data()));
+  return snapshot.docs.map((doc) => docToPriceChange(doc.id, doc.data()));
 }

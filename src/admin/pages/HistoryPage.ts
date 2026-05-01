@@ -6,12 +6,12 @@
 import { adminIcon } from "../components/icons";
 import { renderAdminHeader } from "../components/AdminLayout";
 import { getAdminState } from "../store/adminDataStore";
-import { getPriceHistory, type PriceChangeLog } from "@/services";
+import { getPriceHistory } from "@/services";
 import { formatCurrency } from "@/utils";
-import type { Price } from "@/types";
+import type { Price, PriceChange } from "@/types";
 
 // Local state for history page
-let historyData: PriceChangeLog[] = [];
+let historyData: PriceChange[] = [];
 let isLoadingHistory = false;
 let historyError: string | null = null;
 

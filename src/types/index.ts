@@ -75,6 +75,7 @@ export interface Product {
 export interface PriceChange {
   id: string;
   productId: string;
+  productName: string;
   previousPrices: Price[];
   newPrices: Price[];
   changedAt: Date;
