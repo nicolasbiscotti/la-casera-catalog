@@ -34,7 +34,7 @@ let state: AdminDataState = {
 };
 
 // Subscribers
-type Subscriber = (state: AdminDataState) => void;
+type Subscriber = () => void;
 const subscribers: Set<Subscriber> = new Set();
 
 // Get current state
@@ -50,7 +50,7 @@ export function subscribeAdmin(callback: Subscriber): () => void {
 
 // Notify subscribers
 function notifySubscribers(): void {
-  subscribers.forEach((callback) => callback(state));
+  subscribers.forEach((callback) => callback());
 }
 
 // Update state

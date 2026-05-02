@@ -22,7 +22,7 @@ const initialState: CatalogState = {
 let state = { ...initialState };
 
 // Subscribers for state changes
-type Subscriber = (state: CatalogState) => void;
+type Subscriber = () => void;
 const subscribers: Set<Subscriber> = new Set();
 
 // Get current state
@@ -38,7 +38,7 @@ export function subscribe(callback: Subscriber): () => void {
 
 // Notify all subscribers
 function notifySubscribers(): void {
-  subscribers.forEach((callback) => callback(state));
+  subscribers.forEach((callback) => callback());
 }
 
 // Update state

@@ -38,9 +38,6 @@ export async function getCategories(): Promise<Category[]> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
 
-  console.log("data base ==> ", db);
-  console.log("collection path ==> ", collectionPath);
-
   const q = query(collection(db, collectionPath), orderBy("sortOrder", "asc"));
 
   const snapshot = await getDocs(q);
@@ -51,9 +48,6 @@ export async function getCategories(): Promise<Category[]> {
 export async function getActiveCategories(): Promise<Category[]> {
   const db = getFirestoreDb();
   const collectionPath = getCollectionPath(COLLECTION_NAME);
-
-  console.log("data base ==> ", db);
-  console.log("collection path ==> ", collectionPath);
 
   const q = query(
     collection(db, collectionPath),

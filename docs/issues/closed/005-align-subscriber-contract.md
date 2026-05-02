@@ -4,8 +4,9 @@
 |-------|-------|
 | **Type** | refactor |
 | **Priority** | low |
-| **Status** | open |
+| **Status** | closed |
 | **Opened** | 2026-05-01 |
+| **Closed** | 2026-05-02 |
 | **Depends on** | — |
 
 ---

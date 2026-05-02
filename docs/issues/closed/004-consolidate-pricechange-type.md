@@ -1,3 +1,6 @@
+The recommended implementation order is: #004 → #005 → #003 → #006 → #008 → #007, giving you the quick wins first and holding the
+structural changes (#006, #007) until the foundation is solid.
+
 # 004 — Consolidate PriceChange and PriceChangeLog types
 
 | Field | Value |
