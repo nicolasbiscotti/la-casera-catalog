@@ -19,7 +19,7 @@ A store is a module that owns a private state object, exposes read/write functio
 let state: CatalogState = { ... };
 
 // Subscribers
-type Subscriber = (state: CatalogState) => void;
+type Subscriber = () => void;
 const subscribers = new Set<Subscriber>();
 
 export function subscribe(callback: Subscriber): () => void {
@@ -29,7 +29,7 @@ export function subscribe(callback: Subscriber): () => void {
 
 function setState(updates: Partial<CatalogState>): void {
   state = { ...state, ...updates };           // Immutable shallow copy
-  subscribers.forEach(fn => fn(state));
+  subscribers.forEach(fn => fn());
 }
 
 // Public read access
@@ -102,7 +102,7 @@ function render(): void {
 
 ```typescript
 export function initAdminApp(): void {
-  subscribeAuth((authState) => { if (authState.isInitialized) render(); });
+  subscribeAuth(() => { if (getAuthState().isInitialized) render(); });
   subscribeAdmin(() => { if (isAuthenticated()) render(); });
   initAuthListener();
   render();

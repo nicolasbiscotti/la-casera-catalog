@@ -242,10 +242,9 @@ function attachPageListeners(): void {
 // Initialize admin app
 export function initAdminApp(): void {
   // Subscribe to auth state changes
-  subscribeAuth((authState) => {
-    if (authState.isInitialized) {
+  subscribeAuth(() => {
+    if (getAuthState().isInitialized) {
       if (isAuthenticated()) {
-        // Load data when authenticated
         loadAdminData();
       }
       render();

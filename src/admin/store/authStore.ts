@@ -22,7 +22,7 @@ let state: AdminAuthState = {
 };
 
 // Subscribers
-type Subscriber = (state: AdminAuthState) => void;
+type Subscriber = () => void;
 const subscribers: Set<Subscriber> = new Set();
 
 // Get current state
@@ -38,7 +38,7 @@ export function subscribeAuth(callback: Subscriber): () => void {
 
 // Notify subscribers
 function notifySubscribers(): void {
-  subscribers.forEach((callback) => callback(state));
+  subscribers.forEach((callback) => callback());
 }
 
 // Update state
