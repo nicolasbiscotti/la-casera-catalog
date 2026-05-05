@@ -227,7 +227,7 @@ function attachPageListeners(): void {
         attachBrandsListeners(navigate, showToast);
         break;
       case "products":
-        attachProductsListeners(navigate, showToast, render);
+        attachProductsListeners(navigate, showToast);
         break;
       case "history":
         attachHistoryListeners(render);

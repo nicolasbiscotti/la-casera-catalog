@@ -252,23 +252,13 @@ export function attachCategoriesListeners(
 }
 ```
 
-**Exception — `attachProductsListeners`** accepts a third `render` callback because the product list has an inline availability toggle that updates the store but needs to re-render without navigating:
-
-```typescript
-export function attachProductsListeners(
-  onNavigate: NavigateFn,
-  showToast: ToastFn,
-  render: () => void,   // direct re-render hook; see issue #003
-): void { ... }
-```
-
 **Exception — `HistoryPage.ts`** owns module-level state (`historyData`, `isLoadingHistory`, `historyError`) rather than using a store, because price-history data is only consumed by this page. `attachHistoryListeners` receives a `render` callback for the same reason:
 
 ```typescript
 export function attachHistoryListeners(render: () => void): void { ... }
 ```
 
-Both exceptions are tracked in the issue tracker and scheduled for removal.
+This exception is tracked in the issue tracker (issue #008) and scheduled for removal.
 
 **Form pages** read field values directly from the DOM on submit:
 
