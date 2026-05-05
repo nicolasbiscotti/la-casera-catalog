@@ -454,7 +454,6 @@ export function renderProductFormPage(
 export function attachProductsListeners(
   onNavigate: (page: string, id?: string) => void,
   showToast: (message: string, type?: "success" | "error") => void,
-  render: () => void,
 ): void {
   document
     .querySelector('[data-action="new"]')
@@ -475,7 +474,6 @@ export function attachProductsListeners(
       if (id) {
         await toggleProductAvailability(id);
         showToast("Disponibilidad actualizada");
-        render();
       }
     });
   });
@@ -489,7 +487,6 @@ export function attachProductsListeners(
         const success = await removeProduct(id);
         if (success) {
           showToast("Producto eliminado");
-          render();
         } else {
           showToast("Error al eliminar", "error");
         }
