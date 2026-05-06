@@ -243,14 +243,6 @@ export function attachCategoriesListeners(
 }
 ```
 
-**Exception — `HistoryPage.ts`** owns module-level state (`historyData`, `isLoadingHistory`, `historyError`) rather than using a store, because price-history data is only consumed by this page. `attachHistoryListeners` receives a `render` callback for the same reason:
-
-```typescript
-export function attachHistoryListeners(render: () => void): void { ... }
-```
-
-This exception is tracked in the issue tracker (issue #008) and scheduled for removal.
-
 **Form pages** read field values directly from the DOM on submit:
 
 ```typescript

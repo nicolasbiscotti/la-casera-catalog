@@ -26,7 +26,6 @@ import {
   renderExportPage,
   attachExportListeners,
 } from "./pages";
-import { initHistoryPage } from "./pages/HistoryPage";
 import {
   getAuthState,
   subscribeAuth,
@@ -40,6 +39,11 @@ import {
   setPage,
   setToast,
 } from "./store/adminUIStore";
+import {
+  getPriceHistoryState,
+  subscribePriceHistory,
+  loadPriceHistory,
+} from "./store/priceHistoryStore";
 
 // Navigation
 function navigate(page: string, id?: string): void {
@@ -47,7 +51,10 @@ function navigate(page: string, id?: string): void {
   setPage(page, id);
 
   if (page === "history") {
-    initHistoryPage().then(() => render());
+    const { historyData, isLoading } = getPriceHistoryState();
+    if (historyData.length === 0 && !isLoading) {
+      loadPriceHistory();
+    }
   }
 }
 
@@ -213,7 +220,7 @@ function attachPageListeners(): void {
         attachProductsListeners(navigate, showToast);
         break;
       case "history":
-        attachHistoryListeners(render);
+        attachHistoryListeners();
         break;
       case "export":
         attachExportListeners(showToast);
@@ -243,6 +250,9 @@ export function initAdminApp(): void {
 
   // Subscribe to UI state changes
   subscribeUI(render);
+
+  // Subscribe to price history changes
+  subscribePriceHistory(render);
 
   // Initialize auth listener
   initAuthListener();
