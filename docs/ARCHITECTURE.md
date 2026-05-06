@@ -109,18 +109,9 @@ export function initAdminApp(): void {
 }
 ```
 
-AdminApp also holds its own internal UI state object that is separate from the stores:
+UI state (current page, current id, active toast) lives in `src/admin/store/adminUIStore.ts` — same subscribe/setState/getState pattern as the other stores. `AdminApp.ts` subscribes to it via `subscribeUI(render)`.
 
-```typescript
-interface AdminAppState {
-  currentPage: string;
-  currentId: string | null;
-  toast: { message: string; type: "success" | "error" } | null;
-}
-let appState: AdminAppState = { currentPage: "dashboard", currentId: null, toast: null };
-```
-
-`navigate(page, id?)` mutates `appState` and calls `render()` directly. `showToast(message, type)` sets `appState.toast`, calls `render()`, and clears the toast after 3 s.
+`navigate(page, id?)` calls `closeSidebar()` then `setPage(page, id)` on `adminUIStore`; the subscription triggers `render()`. `showToast(message, type)` calls `setToast(message, type)` on `adminUIStore`; the store owns the 3-second timeout and clears toast state via `setState`.
 
 ---
 

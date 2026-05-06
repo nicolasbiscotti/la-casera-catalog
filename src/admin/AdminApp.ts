@@ -34,31 +34,20 @@ import {
   isAuthenticated,
 } from "./store/authStore";
 import { subscribeAdmin, loadAdminData } from "./store/adminDataStore";
-
-// Admin App State
-interface AdminAppState {
-  currentPage: string;
-  currentId: string | null;
-  toast: { message: string; type: "success" | "error" } | null;
-}
-
-let appState: AdminAppState = {
-  currentPage: "dashboard",
-  currentId: null,
-  toast: null,
-};
+import {
+  getAdminUIState,
+  subscribeUI,
+  setPage,
+  setToast,
+} from "./store/adminUIStore";
 
 // Navigation
 function navigate(page: string, id?: string): void {
-  appState.currentPage = page;
-  appState.currentId = id || null;
   closeSidebar();
+  setPage(page, id);
 
-  // Initialize history page data when navigating to it
   if (page === "history") {
     initHistoryPage().then(() => render());
-  } else {
-    render();
   }
 }
 
@@ -67,13 +56,7 @@ function showToast(
   message: string,
   type: "success" | "error" = "success",
 ): void {
-  appState.toast = { message, type };
-  render();
-
-  setTimeout(() => {
-    appState.toast = null;
-    render();
-  }, 3000);
+  setToast(message, type);
 }
 
 // Main render function
@@ -105,7 +88,7 @@ function render(): void {
 
   // Render admin panel
   let pageContent = "";
-  const { currentPage, currentId } = appState;
+  const { currentPage, currentId, toast } = getAdminUIState();
 
   // Determine which page to render
   if (
@@ -175,7 +158,7 @@ function render(): void {
       <div class="lg:ml-64">
         ${pageContent}
       </div>
-      ${appState.toast ? renderToast(appState.toast.message, appState.toast.type) : ""}
+      ${toast ? renderToast(toast.message, toast.type) : ""}
     </div>
   `;
 
@@ -186,7 +169,7 @@ function render(): void {
 
 // Attach page-specific listeners
 function attachPageListeners(): void {
-  const { currentPage, currentId } = appState;
+  const { currentPage, currentId } = getAdminUIState();
 
   if (currentId && currentId !== "new") {
     // Edit form listeners
@@ -257,6 +240,9 @@ export function initAdminApp(): void {
       render();
     }
   });
+
+  // Subscribe to UI state changes
+  subscribeUI(render);
 
   // Initialize auth listener
   initAuthListener();
