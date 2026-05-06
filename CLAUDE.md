@@ -11,8 +11,13 @@ Read these three documents in full before writing or editing any code. They defi
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Always — store pattern, rendering, components, services, pages, router |
 | [`docs/ENGINEERING_APPROACH.md`](docs/ENGINEERING_APPROACH.md) | Always — issue structure, acceptance criteria, TDD cycle, vertical slices |
 | [`docs/STRANGLER_FIG.md`](docs/STRANGLER_FIG.md) | Always — migration workflow, dependency order for open refactors, GitNexus integration points |
+| [`docs/issues/README.md`](docs/issues/README.md) | Always — current issue state: which issues are open, closed, their IDs, types, and priorities |
 
-Do not begin implementation until you have read all three.
+Do not begin implementation until you have read all four.
+
+### Issue tracking
+
+Issues live in `docs/issues/`. Open issues are in `open/`, resolved ones in `closed/`. The `README.md` is the authoritative index — read it at the start of every session to understand what work is pending, in progress, or already resolved before proposing or starting any task. Individual issue files contain full context: acceptance criteria, thin vertical slices, affected files, and decisions.
 
 ## Commands
 
@@ -112,7 +117,7 @@ All entities include `createdAt`, `updatedAt`, `createdBy?`, `lastModifiedBy?` a
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **la-casera-catalog** (907 symbols, 1794 relationships, 76 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **la-casera-catalog** (913 symbols, 1798 relationships, 76 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

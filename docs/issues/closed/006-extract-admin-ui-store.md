@@ -4,8 +4,9 @@
 |-------|-------|
 | **Type** | refactor |
 | **Priority** | medium |
-| **Status** | open |
+| **Status** | closed |
 | **Opened** | 2026-05-01 |
+| **Resolved** | 2026-05-06 |
 | **Depends on** | — |
 
 ---
@@ -160,3 +161,13 @@ Run `pnpm type-check`. Smoke-test in browser: login, navigate pages, trigger a t
 | `src/admin/store/index.ts` | Export new store |
 | `src/admin/AdminApp.ts` | Subscribe to `adminUIStore`; delete `appState`; delegate to store actions |
 | `docs/ARCHITECTURE.md` | Update AdminApp rendering section |
+
+---
+
+## Resolution
+
+Impact analysis: `navigate` LOW (0 callers — known `onNavigate` blind spot), `appState` LOW (module-private), `showToast` CRITICAL but all d=1 confidence 0.5 (callback parameter blind spot). Actual scope was narrow: one file to create, one to rewrite.
+
+Key implementation detail: `closeSidebar()` must be called before `setPage()` in `navigate` so the subscription-triggered render sees `sidebarOpen = false` when building the sidebar HTML.
+
+`gitnexus_detect_changes` confirmed only `AdminApp.ts` symbols (`navigate`, `render`, `initAdminApp`, `appState`, `AdminAppState`) were touched. `pnpm type-check` passes with zero errors. All six ACs verified.
