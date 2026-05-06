@@ -27,6 +27,8 @@ pnpm dev:emulators          # Firebase emulators + dev server (use for local dev
 pnpm build                  # TypeScript check + Vite production build
 pnpm test                   # Vitest in watch mode
 pnpm test:run               # Vitest single run (CI)
+pnpm test:e2e               # Playwright E2E tests (requires pnpm dev:emulators running)
+pnpm test:e2e:ui            # Playwright interactive UI mode
 pnpm lint                   # ESLint
 pnpm lint:fix               # ESLint with auto-fix
 pnpm type-check             # tsc --noEmit
