@@ -4,7 +4,6 @@
  */
 
 import { adminIcon } from "../components/icons";
-import { renderAdminHeader } from "../components/AdminLayout";
 import { getAdminState } from "../store/adminDataStore";
 import { formatCurrency } from "@/utils";
 import type { Category, Brand, Product, Price } from "@/types";
@@ -489,7 +488,6 @@ export function renderExportPage(
   const stats = getExportStats();
 
   return `
-    ${renderAdminHeader("Exportar PDF")}
     <main class="p-4 lg:p-6">
       <div class="bg-white rounded-xl border border-warm-200 max-w-2xl">
         <div class="px-6 py-4 border-b border-warm-100">

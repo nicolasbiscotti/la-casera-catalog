@@ -11,5 +11,5 @@ To resolve an issue: move the file to `closed/` and add a **Resolved** date + **
 | [004](closed/004-consolidate-pricechange-type.md) | refactor | low | closed | Consolidate PriceChange and PriceChangeLog types |
 | [005](open/005-align-subscriber-contract.md) | refactor | low | closed | Align store subscriber contract to zero-argument callbacks |
 | [006](closed/006-extract-admin-ui-store.md) | refactor | medium | closed | Extract AdminApp UI state into adminUIStore |
-| [007](open/007-adminapp-partial-render.md) | refactor | medium | open | Apply partial render pattern to AdminApp |
+| [007](closed/007-adminapp-partial-render.md) | refactor | medium | closed | Apply partial render pattern to AdminApp |
 | [008](closed/008-price-history-store.md) | refactor | medium | closed | Move HistoryPage state into priceHistoryStore |

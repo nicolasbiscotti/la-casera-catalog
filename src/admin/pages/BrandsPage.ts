@@ -1,5 +1,4 @@
 import { adminIcon } from "../components/icons";
-import { renderAdminHeader } from "../components/AdminLayout";
 import {
   getAdminState,
   saveBrand,
@@ -15,7 +14,6 @@ export function renderBrandsListPage(
 
   if (isLoading) {
     return `
-      ${renderAdminHeader("Marcas")}
       <main class="p-4 lg:p-6">
         <div class="flex items-center justify-center h-64">
           ${adminIcon("loader", "w-8 h-8 text-brand-500")}
@@ -25,7 +23,6 @@ export function renderBrandsListPage(
   }
 
   return `
-    ${renderAdminHeader("Marcas")}
     <main class="p-4 lg:p-6">
       <div class="bg-white rounded-xl border border-warm-200">
         <div class="p-4 border-b border-warm-100 flex items-center justify-between">
@@ -85,7 +82,6 @@ export function renderBrandFormPage(
   const brand = isEdit ? getBrandById(id) : null;
 
   return `
-    ${renderAdminHeader(isEdit ? "Editar Marca" : "Nueva Marca")}
     <main class="p-4 lg:p-6">
       <button data-back class="flex items-center gap-2 text-warm-600 hover:text-brand-600 mb-6">
         ${adminIcon("arrowLeft", "w-4 h-4")} Volver

@@ -1,7 +1,10 @@
 import {
   renderSidebar,
+  renderAdminHeader,
   renderToast,
   attachLayoutListeners,
+  updateSidebarDOM,
+  updateAdminHeaderTitle,
   closeSidebar,
 } from "./components";
 import {
@@ -48,6 +51,7 @@ import {
 // Navigation
 function navigate(page: string, id?: string): void {
   closeSidebar();
+  updateSidebarDOM();
   setPage(page, id);
 
   if (page === "history") {
@@ -66,14 +70,125 @@ function showToast(
   setToast(message, type);
 }
 
-// Main render function
+// Pure function — returns the HTML string for the current page
+function buildPageContent(page: string, id: string | null): string {
+  if (id && id !== "new" && !["dashboard", "history", "export"].includes(page)) {
+    switch (page) {
+      case "categories":
+        return renderCategoryFormPage(id, navigate);
+      case "brands":
+        return renderBrandFormPage(id, navigate);
+      case "products":
+        return renderProductFormPage(id, navigate);
+      default:
+        return renderDashboardPage(navigate);
+    }
+  } else if (id === "new") {
+    switch (page) {
+      case "categories":
+        return renderCategoryFormPage(null, navigate);
+      case "brands":
+        return renderBrandFormPage(null, navigate);
+      case "products":
+        return renderProductFormPage(null, navigate);
+      default:
+        return renderDashboardPage(navigate);
+    }
+  } else {
+    switch (page) {
+      case "dashboard":
+        return renderDashboardPage(navigate);
+      case "categories":
+        return renderCategoriesListPage(navigate);
+      case "brands":
+        return renderBrandsListPage(navigate);
+      case "products":
+        return renderProductsListPage(navigate);
+      case "history":
+        return renderHistoryPage();
+      case "export":
+        return renderExportPage(showToast);
+      default:
+        return renderDashboardPage(navigate);
+    }
+  }
+}
+
+// DOM-only update — toggles active class on sidebar nav links
+function updateActiveNavLink(): void {
+  const { currentPage } = getAdminUIState();
+  document.querySelectorAll<HTMLElement>("[data-nav]").forEach((btn) => {
+    const page = btn.dataset.nav ?? "";
+    const isActive = currentPage === page || currentPage.startsWith(page);
+    btn.classList.toggle("bg-brand-500", isActive);
+    btn.classList.toggle("text-white", isActive);
+    btn.classList.toggle("text-warm-300", !isActive);
+    btn.classList.toggle("hover:bg-warm-800", !isActive);
+    btn.classList.toggle("hover:text-white", !isActive);
+  });
+}
+
+function getPageTitle(page: string, id: string | null): string {
+  if (id && id !== "new") {
+    switch (page) {
+      case "categories": return "Editar Categoría";
+      case "brands": return "Editar Marca";
+      case "products": return "Editar Producto";
+    }
+  } else if (id === "new") {
+    switch (page) {
+      case "categories": return "Nueva Categoría";
+      case "brands": return "Nueva Marca";
+      case "products": return "Nuevo Producto";
+    }
+  }
+  switch (page) {
+    case "categories": return "Categorías";
+    case "brands": return "Marcas";
+    case "products": return "Productos";
+    case "history": return "Historial de Precios";
+    case "export": return "Exportar PDF";
+    default: return "Dashboard";
+  }
+}
+
+// Renders the persistent shell (sidebar + header + #admin-main placeholder) once per session
+function renderShell(): void {
+  const app = document.getElementById("app");
+  if (!app) return;
+  app.innerHTML = `
+    <div class="min-h-screen bg-warm-100">
+      ${renderSidebar(getAdminUIState().currentPage)}
+      <div class="lg:ml-64">
+        ${renderAdminHeader()}
+        <div id="admin-main"></div>
+      </div>
+    </div>
+  `;
+  attachLayoutListeners(navigate);
+}
+
+// Updates only #admin-main — sidebar and header are never rebuilt
+function renderPage(): void {
+  const main = document.getElementById("admin-main");
+  if (!main) { renderShell(); return; }
+
+  const { currentPage, currentId, toast } = getAdminUIState();
+  main.innerHTML =
+    buildPageContent(currentPage, currentId) +
+    (toast ? renderToast(toast.message, toast.type) : "");
+  updateActiveNavLink();
+  updateAdminHeaderTitle(getPageTitle(currentPage, currentId));
+  attachPageListeners();
+}
+
+// Main render function — coordinates auth state and shell vs. page updates
 function render(): void {
   const app = document.getElementById("app");
   if (!app) return;
 
   const authState = getAuthState();
 
-  // Show loading while initializing auth
   if (!authState.isInitialized) {
     app.innerHTML = `
       <div class="min-h-screen flex items-center justify-center bg-warm-100">
@@ -86,92 +201,16 @@ function render(): void {
     return;
   }
 
-  // Show login if not authenticated
   if (!isAuthenticated()) {
     app.innerHTML = renderLoginPage();
     attachLoginListeners();
     return;
   }
 
-  // Render admin panel
-  let pageContent = "";
-  const { currentPage, currentId, toast } = getAdminUIState();
-
-  // Determine which page to render
-  if (
-    currentId &&
-    currentId !== "new" &&
-    !["dashboard", "history", "export"].includes(currentPage)
-  ) {
-    // Edit form
-    switch (currentPage) {
-      case "categories":
-        pageContent = renderCategoryFormPage(currentId, navigate);
-        break;
-      case "brands":
-        pageContent = renderBrandFormPage(currentId, navigate);
-        break;
-      case "products":
-        pageContent = renderProductFormPage(currentId, navigate);
-        break;
-      default:
-        pageContent = renderDashboardPage(navigate);
-    }
-  } else if (currentId === "new") {
-    // New form
-    switch (currentPage) {
-      case "categories":
-        pageContent = renderCategoryFormPage(null, navigate);
-        break;
-      case "brands":
-        pageContent = renderBrandFormPage(null, navigate);
-        break;
-      case "products":
-        pageContent = renderProductFormPage(null, navigate);
-        break;
-      default:
-        pageContent = renderDashboardPage(navigate);
-    }
-  } else {
-    // List pages
-    switch (currentPage) {
-      case "dashboard":
-        pageContent = renderDashboardPage(navigate);
-        break;
-      case "categories":
-        pageContent = renderCategoriesListPage(navigate);
-        break;
-      case "brands":
-        pageContent = renderBrandsListPage(navigate);
-        break;
-      case "products":
-        pageContent = renderProductsListPage(navigate);
-        break;
-      case "history":
-        pageContent = renderHistoryPage();
-        break;
-      case "export":
-        pageContent = renderExportPage(showToast);
-        break;
-      default:
-        pageContent = renderDashboardPage(navigate);
-    }
+  if (!document.getElementById("admin-main")) {
+    renderShell();
   }
-
-  // Full layout
-  app.innerHTML = `
-    <div class="min-h-screen bg-warm-100">
-      ${renderSidebar(currentPage)}
-      <div class="lg:ml-64">
-        ${pageContent}
-      </div>
-      ${toast ? renderToast(toast.message, toast.type) : ""}
-    </div>
-  `;
-
-  // Attach event listeners (pass render for sidebar toggle)
-  attachLayoutListeners(navigate, render);
-  attachPageListeners();
+  renderPage();
 }
 
 // Attach page-specific listeners

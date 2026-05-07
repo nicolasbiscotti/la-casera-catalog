@@ -1,5 +1,4 @@
 import { adminIcon } from "../components/icons";
-import { renderAdminHeader } from "../components/AdminLayout";
 import {
   getAdminState,
   getAvailableProductsCount,
@@ -12,7 +11,6 @@ export function renderDashboardPage(
 
   if (isLoading) {
     return `
-      ${renderAdminHeader("Dashboard")}
       <main class="p-4 lg:p-6">
         <div class="flex items-center justify-center h-64">
           ${adminIcon("loader", "w-8 h-8 text-brand-500")}
@@ -51,7 +49,6 @@ export function renderDashboardPage(
   const recentProducts = products.slice(0, 5);
 
   return `
-    ${renderAdminHeader("Dashboard")}
     <main class="p-4 lg:p-6 space-y-6">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         ${stats

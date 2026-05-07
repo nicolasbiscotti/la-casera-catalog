@@ -98,20 +98,32 @@ function render(): void {
 
 ### AdminApp
 
-`AdminApp.ts` subscribes to both `authStore` and `adminDataStore`. On every state change it replaces the full `app.innerHTML`, including the sidebar and the active page content, then re-attaches all listeners:
+`AdminApp.ts` uses a two-tier render strategy — the shell is built once; only the main content area is updated on each state change:
 
 ```typescript
 export function initAdminApp(): void {
   subscribeAuth(() => { if (getAuthState().isInitialized) render(); });
   subscribeAdmin(() => { if (isAuthenticated()) render(); });
+  subscribeUI(render);
+  subscribePriceHistory(render);
   initAuthListener();
   render();
 }
 ```
 
+**`render()`** coordinates auth state:
+- Not initialized → loading spinner (full `app.innerHTML`)
+- Not authenticated → login page (full `app.innerHTML`)
+- Authenticated, no shell → calls `renderShell()` then `renderPage()`
+- Authenticated, shell exists → calls `renderPage()` only
+
+**`renderShell()`** runs once per session. It writes the persistent admin layout (sidebar + `<div id="admin-main">`) to `#app` and calls `attachLayoutListeners(navigate)` exactly once.
+
+**`renderPage()`** updates only `#admin-main` — the sidebar is never rebuilt. It calls `buildPageContent()` to get the page HTML string, appends any active toast (fixed-position so placement in `#admin-main` is fine), calls `updateActiveNavLink()` to DOM-toggle the active sidebar link, then calls `attachPageListeners()`.
+
 UI state (current page, current id, active toast) lives in `src/admin/store/adminUIStore.ts` — same subscribe/setState/getState pattern as the other stores. `AdminApp.ts` subscribes to it via `subscribeUI(render)`.
 
-`navigate(page, id?)` calls `closeSidebar()` then `setPage(page, id)` on `adminUIStore`; the subscription triggers `render()`. `showToast(message, type)` calls `setToast(message, type)` on `adminUIStore`; the store owns the 3-second timeout and clears toast state via `setState`.
+`navigate(page, id?)` calls `closeSidebar()`, `updateSidebarDOM()` (DOM-only sidebar close), then `setPage(page, id)` on `adminUIStore`; the subscription triggers `render()`. `showToast(message, type)` calls `setToast(message, type)` on `adminUIStore`; the store owns the 3-second timeout and clears toast state via `setState`.
 
 ---
 

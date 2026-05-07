@@ -27,6 +27,41 @@ test.describe("Admin — Navigation", () => {
     }
   });
 
+  test("admin header persists and title updates on navigation", async ({
+    adminPage: page,
+  }) => {
+    await expect(page.locator("header h1")).toHaveText("Dashboard", {
+      timeout: 3_000,
+    });
+
+    // Stamp the header element with a sentinel to detect DOM rebuilds
+    await page.evaluate(() => {
+      const h = document.querySelector("header");
+      if (h) (h as HTMLElement & { __sentinel: string }).__sentinel = "persists";
+    });
+
+    // Navigate to categories — title must change
+    await page.click('[data-nav="categories"]');
+    await expect(page.locator("header h1")).toHaveText("Categorías", {
+      timeout: 3_000,
+    });
+
+    // The same header DOM node must have survived — no rebuild
+    const survived = await page.evaluate(() => {
+      const h = document.querySelector("header");
+      return h
+        ? (h as HTMLElement & { __sentinel: string }).__sentinel === "persists"
+        : false;
+    });
+    expect(survived).toBe(true);
+
+    // Navigate again — title must update
+    await page.click('[data-nav="brands"]');
+    await expect(page.locator("header h1")).toHaveText("Marcas", {
+      timeout: 3_000,
+    });
+  });
+
   test("sidebar closes after clicking a nav item (mobile)", async ({
     adminPage: page,
   }) => {

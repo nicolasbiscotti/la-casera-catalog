@@ -1,10 +1,12 @@
 export { adminIcons, adminIcon } from './icons';
-export { 
-  renderSidebar, 
-  renderAdminHeader, 
+export {
+  renderSidebar,
+  renderAdminHeader,
   renderToast,
   attachLayoutListeners,
+  updateSidebarDOM,
+  updateAdminHeaderTitle,
   toggleSidebar,
   closeSidebar,
-  isSidebarOpen 
+  isSidebarOpen
 } from './AdminLayout';

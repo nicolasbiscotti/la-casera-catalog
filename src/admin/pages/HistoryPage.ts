@@ -1,5 +1,4 @@
 import { adminIcon } from "../components/icons";
-import { renderAdminHeader } from "../components/AdminLayout";
 import { getAdminState } from "../store/adminDataStore";
 import { getPriceHistoryState, loadPriceHistory } from "../store/priceHistoryStore";
 import { formatCurrency } from "@/utils";
@@ -21,7 +20,7 @@ export function renderHistoryPage(): string {
   // Loading state
   if (isLoading) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="flex items-center justify-center py-12">
@@ -35,7 +34,7 @@ export function renderHistoryPage(): string {
   // Error state
   if (error) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="text-center py-12">
@@ -56,7 +55,7 @@ export function renderHistoryPage(): string {
   // Empty state
   if (historyData.length === 0) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="text-center py-12">
@@ -73,7 +72,6 @@ export function renderHistoryPage(): string {
 
   // History list
   return `
-    ${renderAdminHeader("Historial de Precios")}
     <main class="p-4 lg:p-6">
       <div class="bg-white rounded-xl border border-warm-200 p-6">
         <div class="flex items-center justify-between mb-6">
