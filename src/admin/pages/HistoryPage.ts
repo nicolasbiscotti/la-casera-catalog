@@ -92,7 +92,7 @@ export function renderHistoryPage(): string {
 
               return `
               <div class="flex items-start gap-4 p-4 rounded-lg bg-warm-50">
-                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
                   ${adminIcon("history", "w-5 h-5 text-brand-600")}
                 </div>
                 <div class="flex-1 min-w-0">
