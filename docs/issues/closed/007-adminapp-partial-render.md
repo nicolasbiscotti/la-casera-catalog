@@ -4,8 +4,9 @@
 |-------|-------|
 | **Type** | refactor |
 | **Priority** | medium |
-| **Status** | open |
+| **Status** | closed |
 | **Opened** | 2026-05-01 |
+| **Resolved** | 2026-05-06 |
 | **Depends on** | [#006](006-extract-admin-ui-store.md) |
 
 ---
@@ -156,4 +157,14 @@ Option A is preferred — it is localized and does not touch `innerHTML`.
 | File | Change |
 |------|--------|
 | `src/admin/AdminApp.ts` | Split `render()` into `renderShell()` + `renderPage()`; add DOM-only active link update |
-| `docs/ARCHITECTURE.md` | Update AdminApp rendering section |
+| `src/admin/components/AdminLayout.ts` | Added `updateSidebarDOM()`; removed `onSidebarToggle` param from `attachLayoutListeners` |
+| `src/admin/components/index.ts` | Exported `updateSidebarDOM` |
+| `docs/ARCHITECTURE.md` | Updated AdminApp rendering section |
+
+---
+
+## Resolution
+
+`render()` now delegates to `renderShell()` (runs once per session on first authenticated render) and `renderPage()` (updates only `#admin-main` on every subsequent state change). The sidebar `<aside>` is never rebuilt after the shell is established. Active nav link is updated via `updateActiveNavLink()` which DOM-toggles Tailwind classes on `[data-nav]` buttons. Sidebar open/close is handled by `updateSidebarDOM()` in AdminLayout.ts, removing the need for a re-render callback in `attachLayoutListeners`.
+
+**Follow-up fix:** The original implementation left `renderAdminHeader` inside each page component, so the header still lived inside `#admin-main` and was destroyed on every navigation. This prevented `attachLayoutListeners` from wiring `#menu-toggle` (it ran against an empty container), breaking the mobile sidebar toggle. The header was subsequently moved into `renderShell()` as a second persistent element alongside the sidebar. `updateAdminHeaderTitle()` performs a DOM-only title update on each navigation.

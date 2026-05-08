@@ -27,6 +27,8 @@ pnpm dev:emulators          # Firebase emulators + dev server (use for local dev
 pnpm build                  # TypeScript check + Vite production build
 pnpm test                   # Vitest in watch mode
 pnpm test:run               # Vitest single run (CI)
+pnpm test:e2e               # Playwright E2E tests (requires pnpm dev:emulators running)
+pnpm test:e2e:ui            # Playwright interactive UI mode
 pnpm lint                   # ESLint
 pnpm lint:fix               # ESLint with auto-fix
 pnpm type-check             # tsc --noEmit
@@ -117,7 +119,7 @@ All entities include `createdAt`, `updatedAt`, `createdBy?`, `lastModifiedBy?` a
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **la-casera-catalog** (913 symbols, 1798 relationships, 76 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **la-casera-catalog** (932 symbols, 1810 relationships, 70 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

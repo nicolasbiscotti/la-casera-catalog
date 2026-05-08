@@ -101,17 +101,45 @@ export function renderSidebar(currentPage: string): string {
   `;
 }
 
-export function renderAdminHeader(title: string): string {
+export function renderAdminHeader(): string {
   return `
-    <header class="sticky top-0 z-30 bg-white border-b border-warm-200 px-4 lg:px-6 py-4">
+    <header id="admin-header" class="sticky top-0 z-30 bg-white border-b border-warm-200 px-4 lg:px-6 py-4">
       <div class="flex items-center gap-4">
         <button id="menu-toggle" class="lg:hidden p-2 rounded-lg hover:bg-warm-100">
           ${adminIcon("menu")}
         </button>
-        <h1 class="text-xl font-display font-bold text-warm-800">${title}</h1>
+        <h1 id="admin-page-title" class="text-xl font-display font-bold text-warm-800"></h1>
       </div>
     </header>
   `;
+}
+
+export function updateAdminHeaderTitle(title: string): void {
+  const el = document.getElementById("admin-page-title");
+  if (el) el.textContent = title;
+}
+
+export function updateSidebarDOM(): void {
+  const aside = document.querySelector("aside");
+  if (!aside) return;
+  if (sidebarOpen) {
+    aside.classList.remove("-translate-x-full");
+    aside.classList.add("translate-x-0");
+    if (!document.getElementById("sidebar-overlay")) {
+      const overlay = document.createElement("div");
+      overlay.id = "sidebar-overlay";
+      overlay.className = "fixed inset-0 bg-black/50 z-40 lg:hidden";
+      overlay.addEventListener("click", () => {
+        closeSidebar();
+        updateSidebarDOM();
+      });
+      aside.insertAdjacentElement("afterend", overlay);
+    }
+  } else {
+    aside.classList.remove("translate-x-0");
+    aside.classList.add("-translate-x-full");
+    document.getElementById("sidebar-overlay")?.remove();
+  }
 }
 
 export function renderToast(
@@ -130,36 +158,21 @@ export function renderToast(
   `;
 }
 
-// Attach layout event listeners
-export function attachLayoutListeners(
-  onNavigate: (page: string) => void,
-  onSidebarToggle?: () => void,
-): void {
-  // Menu toggle
+// Attach layout event listeners — called once per session
+export function attachLayoutListeners(onNavigate: (page: string) => void): void {
   document.getElementById("menu-toggle")?.addEventListener("click", () => {
     toggleSidebar();
-    onSidebarToggle?.();
+    updateSidebarDOM();
   });
 
-  // Sidebar overlay close
-  document.getElementById("sidebar-overlay")?.addEventListener("click", () => {
-    closeSidebar();
-    onSidebarToggle?.();
-  });
-
-  // Logout button
   document.getElementById("logout-btn")?.addEventListener("click", async () => {
     await logout();
   });
 
-  // Navigation buttons
   document.querySelectorAll("[data-nav]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const page = (btn as HTMLElement).dataset.nav;
-      if (page) {
-        closeSidebar();
-        onNavigate(page);
-      }
+      if (page) onNavigate(page);
     });
   });
 }

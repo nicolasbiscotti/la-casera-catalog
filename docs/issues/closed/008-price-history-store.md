@@ -4,8 +4,9 @@
 |-------|-------|
 | **Type** | refactor |
 | **Priority** | medium |
-| **Status** | open |
+| **Status** | closed |
 | **Opened** | 2026-05-01 |
+| **Resolved** | 2026-05-06 |
 | **Depends on** | — |
 
 ---
@@ -175,3 +176,13 @@ export function attachHistoryListeners(): void {
 | `src/admin/AdminApp.ts` | Subscribe to `priceHistoryStore`; call `loadPriceHistory()` on history navigation; remove `initHistoryPage` |
 | `src/admin/pages/HistoryPage.ts` | Delete local state; read from store; remove `render` parameter from listeners |
 | `docs/ARCHITECTURE.md` | Remove HistoryPage exception block |
+
+---
+
+## Resolution
+
+Impact analysis: `initHistoryPage` LOW (1 direct caller: `navigate`), `attachHistoryListeners` HIGH (1 direct caller: `attachPageListeners` — correct, signature changes from `(render) => void` to `() => void`).
+
+Design decision: `loadPriceHistory()` guards only against concurrent calls (`isLoading`), not "already loaded". The "don't re-fetch on navigate back" guard lives in `navigate` (`historyData.length === 0 && !isLoading`), mirroring the original `initHistoryPage` guard. This keeps the Refresh button always functional.
+
+`grep -r "initHistoryPage\|isLoadingHistory\|historyError"` returns zero results. `pnpm type-check` passes with zero errors. `gitnexus_detect_changes` confirmed only the expected symbols in `AdminApp.ts` and `HistoryPage.ts` were touched. All five ACs verified.

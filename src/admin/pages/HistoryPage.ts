@@ -1,19 +1,8 @@
-/**
- * Price History Page
- * Displays price change history from Firestore
- */
-
 import { adminIcon } from "../components/icons";
-import { renderAdminHeader } from "../components/AdminLayout";
 import { getAdminState } from "../store/adminDataStore";
-import { getPriceHistory } from "@/services";
+import { getPriceHistoryState, loadPriceHistory } from "../store/priceHistoryStore";
 import { formatCurrency } from "@/utils";
-import type { Price, PriceChange } from "@/types";
-
-// Local state for history page
-let historyData: PriceChange[] = [];
-let isLoadingHistory = false;
-let historyError: string | null = null;
+import type { Price } from "@/types";
 
 function formatPriceForHistory(price: Price): string {
   if (price.type === "unit")
@@ -24,28 +13,14 @@ function formatPriceForHistory(price: Price): string {
   return "-";
 }
 
-async function loadHistory(): Promise<void> {
-  isLoadingHistory = true;
-  historyError = null;
-
-  try {
-    historyData = await getPriceHistory(50);
-  } catch (error) {
-    console.error("Error loading price history:", error);
-    historyError =
-      error instanceof Error ? error.message : "Error al cargar historial";
-  } finally {
-    isLoadingHistory = false;
-  }
-}
-
 export function renderHistoryPage(): string {
   const { products } = getAdminState();
+  const { historyData, isLoading, error } = getPriceHistoryState();
 
   // Loading state
-  if (isLoadingHistory) {
+  if (isLoading) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="flex items-center justify-center py-12">
@@ -57,9 +32,9 @@ export function renderHistoryPage(): string {
   }
 
   // Error state
-  if (historyError) {
+  if (error) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="text-center py-12">
@@ -67,7 +42,7 @@ export function renderHistoryPage(): string {
               ${adminIcon("alertCircle", "w-8 h-8 text-red-500")}
             </div>
             <h3 class="font-display text-lg font-semibold text-warm-700 mb-1">Error al cargar</h3>
-            <p class="text-warm-500 text-sm mb-4">${historyError}</p>
+            <p class="text-warm-500 text-sm mb-4">${error}</p>
             <button id="retry-history" class="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600">
               Reintentar
             </button>
@@ -80,7 +55,7 @@ export function renderHistoryPage(): string {
   // Empty state
   if (historyData.length === 0) {
     return `
-      ${renderAdminHeader("Historial de Precios")}
+
       <main class="p-4 lg:p-6">
         <div class="bg-white rounded-xl border border-warm-200 p-6">
           <div class="text-center py-12">
@@ -97,7 +72,6 @@ export function renderHistoryPage(): string {
 
   // History list
   return `
-    ${renderAdminHeader("Historial de Precios")}
     <main class="p-4 lg:p-6">
       <div class="bg-white rounded-xl border border-warm-200 p-6">
         <div class="flex items-center justify-between mb-6">
@@ -118,7 +92,7 @@ export function renderHistoryPage(): string {
 
               return `
               <div class="flex items-start gap-4 p-4 rounded-lg bg-warm-50">
-                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
                   ${adminIcon("history", "w-5 h-5 text-brand-600")}
                 </div>
                 <div class="flex-1 min-w-0">
@@ -145,27 +119,12 @@ export function renderHistoryPage(): string {
   `;
 }
 
-export function attachHistoryListeners(render: () => void): void {
-  // Retry button
-  document
-    .getElementById("retry-history")
-    ?.addEventListener("click", async () => {
-      await loadHistory();
-      render();
-    });
+export function attachHistoryListeners(): void {
+  document.getElementById("retry-history")?.addEventListener("click", () => {
+    loadPriceHistory();
+  });
 
-  // Refresh button
-  document
-    .getElementById("refresh-history")
-    ?.addEventListener("click", async () => {
-      await loadHistory();
-      render();
-    });
-}
-
-// Load history data when page is first accessed
-export async function initHistoryPage(): Promise<void> {
-  if (historyData.length === 0 && !isLoadingHistory) {
-    await loadHistory();
-  }
+  document.getElementById("refresh-history")?.addEventListener("click", () => {
+    loadPriceHistory();
+  });
 }

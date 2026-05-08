@@ -38,6 +38,7 @@ firebase-data
 # Testing
 coverage
 .nyc_output
+test-results
 
 # Misc
 *.tgz
