@@ -31,7 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-        run: pnpm setup
 
       - name: Build Vite project
         run: pnpm build        
