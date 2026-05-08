@@ -9,9 +9,6 @@
     "node": ">=22.0.0",
     "pnpm": ">=10.0.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": ["@firebase/util", "esbuild", "protobufjs"]
-  },
   "scripts": {
     "dev": "vite",
     "dev:emulators": "concurrently -k -n \"EMU,DEV\" -c \"yellow,cyan\" \"pnpm firebase:emulators\" \"wait-on tcp:8080 && pnpm dev\"",
